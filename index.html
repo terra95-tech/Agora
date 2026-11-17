@@ -1,0 +1,697 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
+    <title>Ágora</title>
+    <style>
+        :root {
+            --bg-color: #121212;        /* Gris grafito profundo anti-deslumbramiento */
+            --panel-bg: #1e1e1e;        /* Gris plomo sutil para superficies */
+            --editor-bg: #181818;       /* Fondo suave para escritura prolongada */
+            --accent-color: #10b981;    /* Verde esmeralda calmante y profesional */
+            --accent-hover: #059669;
+            --text-color: #e0e0e0;      /* Gris perla suave */
+            --text-muted: #9ca3af;
+            --border-color: #2d2d2d;
+            --font-size: 13px;          /* Tamaño de fuente ajustable */
+        }
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, monospace;
+        }
+        body {
+            background-color: var(--bg-color);
+            color: var(--text-color);
+            display: flex;
+            flex-direction: column;
+            height: 100vh;
+            overflow: hidden;
+        }
+        /* Bloque 1: Barra Superior de Links */
+        header {
+            background: var(--panel-bg);
+            border-bottom: 1px solid var(--border-color);
+            padding: 10px 12px;
+            display: flex;
+            gap: 8px;
+            overflow-x: auto;
+            white-space: nowrap;
+            align-items: center;
+        }
+        .brand-tag {
+            font-weight: 700;
+            color: var(--accent-color);
+            font-size: 13px;
+            letter-spacing: 0.5px;
+            margin-right: 6px;
+        }
+        .link-btn {
+            background: #252525;
+            color: var(--text-color);
+            padding: 6px 12px;
+            border-radius: 6px;
+            text-decoration: none;
+            font-size: 12px;
+            border: 1px solid var(--border-color);
+            transition: all 0.2s ease;
+        }
+        .link-btn:active {
+            background: var(--accent-color);
+            color: #121212;
+            border-color: var(--accent-color);
+        }
+        .config-btn {
+            background: #252525;
+            color: var(--accent-color);
+            cursor: pointer;
+            border: 1px solid var(--border-color);
+            padding: 6px 10px;
+            border-radius: 6px;
+            font-size: 12px;
+            font-weight: 600;
+        }
+        
+        /* Contenedor Principal */
+        main {
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+            position: relative;
+            overflow: hidden;
+        }
+
+        /* Bloque 2: Editor */
+        .workspace {
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+            height: 100%;
+        }
+        .toolbar {
+            background: var(--panel-bg);
+            padding: 8px 12px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            border-bottom: 1px solid var(--border-color);
+            gap: 6px;
+            overflow-x: auto;
+        }
+        .toolbar-group {
+            display: flex;
+            gap: 6px;
+        }
+        .toolbar button {
+            background: var(--accent-color);
+            color: #111;
+            border: none;
+            padding: 6px 12px;
+            font-weight: 600;
+            border-radius: 6px;
+            cursor: pointer;
+            font-size: 12px;
+            transition: background 0.2s;
+            white-space: nowrap;
+        }
+        .toolbar button:active {
+            background: var(--accent-hover);
+        }
+
+        /* Mini Barra de Herramientas SPK (Seleccionar, Copiar, Pegar, Borrar, Limpiar) */
+        .editor-tools {
+            background: #181818;
+            padding: 6px 12px;
+            display: flex;
+            gap: 6px;
+            border-bottom: 1px solid var(--border-color);
+            overflow-x: auto;
+        }
+        .editor-tools button {
+            background: #2a2a2a;
+            color: var(--text-color);
+            border: 1px solid var(--border-color);
+            padding: 4px 8px;
+            border-radius: 4px;
+            font-size: 11px;
+            cursor: pointer;
+            white-space: nowrap;
+        }
+        .editor-tools button:active {
+            background: var(--accent-color);
+            color: #121212;
+        }
+
+        #code-editor {
+            flex: 1;
+            background: var(--editor-bg);
+            color: #d4d4d4;
+            border: none;
+            padding: 14px;
+            font-family: monospace;
+            font-size: var(--font-size);
+            resize: none;
+            outline: none;
+            line-height: 1.5;
+            tab-size: 4;
+        }
+
+        /* Panel de Link Generado */
+        #deploy-info {
+            background: #17252a;
+            border-top: 1px solid #2b6cb0;
+            padding: 10px 14px;
+            display: none;
+            align-items: center;
+            justify-content: space-between;
+            gap: 10px;
+            font-size: 12px;
+        }
+        #deploy-info a {
+            color: #6ee7b7;
+            text-decoration: underline;
+            word-break: break-all;
+        }
+        .deploy-actions {
+            display: flex;
+            gap: 6px;
+        }
+        .deploy-actions button {
+            background: #059669;
+            color: #fff;
+            border: none;
+            padding: 4px 8px;
+            border-radius: 4px;
+            font-size: 11px;
+            cursor: pointer;
+        }
+
+        /* Bloque 3: Panel Lateral Deslizable de la IA (80% de ancho) */
+        #ai-panel {
+            position: absolute;
+            top: 0;
+            right: -100%;
+            width: 80%;
+            max-width: 450px;
+            height: 100%;
+            background: var(--panel-bg);
+            border-left: 1px solid var(--border-color);
+            transition: right 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+            display: flex;
+            flex-direction: column;
+            z-index: 99999;
+            box-shadow: -8px 0 24px rgba(0,0,0,0.8);
+        }
+        #ai-panel.open {
+            right: 0;
+        }
+        .ai-header {
+            padding: 14px;
+            background: var(--editor-bg);
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            border-bottom: 1px solid var(--border-color);
+            font-weight: 600;
+            font-size: 13px;
+            color: var(--accent-color);
+        }
+        .ai-close {
+            background: none;
+            border: none;
+            color: var(--text-muted);
+            font-size: 20px;
+            cursor: pointer;
+            line-height: 1;
+        }
+        .ai-chat-box {
+            flex: 1;
+            padding: 12px;
+            overflow-y: auto;
+            display: flex;
+            flex-direction: column;
+            gap: 10px;
+            font-size: 13px;
+            line-height: 1.4;
+        }
+        .msg {
+            padding: 10px 12px;
+            border-radius: 8px;
+            max-width: 90%;
+            word-break: break-word;
+        }
+        .msg.user {
+            background: #282828;
+            align-self: flex-end;
+            color: var(--text-color);
+            border: 1px solid #363636;
+        }
+        .msg.ai {
+            background: var(--editor-bg);
+            align-self: flex-start;
+            border: 1px solid var(--border-color);
+            color: #a7f3d0;
+        }
+        .ai-input-area {
+            padding: 10px;
+            background: var(--editor-bg);
+            border-top: 1px solid var(--border-color);
+            display: flex;
+            gap: 8px;
+        }
+        .ai-input-area input {
+            flex: 1;
+            background: #252525;
+            border: 1px solid var(--border-color);
+            color: var(--text-color);
+            padding: 9px 12px;
+            border-radius: 6px;
+            font-size: 13px;
+            outline: none;
+        }
+        .ai-input-area input:focus {
+            border-color: var(--accent-color);
+        }
+        .ai-input-area button {
+            background: var(--accent-color);
+            color: #111;
+            border: none;
+            padding: 0 14px;
+            font-weight: 600;
+            border-radius: 6px;
+            cursor: pointer;
+            font-size: 12px;
+        }
+
+        /* Botón Flotante para abrir la IA */
+        #btn-toggle-ai {
+            position: fixed;
+            bottom: 20px;
+            right: 20px;
+            background: var(--accent-color);
+            color: #111;
+            border: none;
+            width: 50px;
+            height: 50px;
+            border-radius: 50%;
+            font-size: 20px;
+            box-shadow: 0 4px 16px rgba(16, 185, 129, 0.5);
+            cursor: pointer;
+            z-index: 99998;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            transition: transform 0.2s;
+            touch-action: manipulation;
+        }
+        #btn-toggle-ai:active {
+            transform: scale(0.95);
+        }
+    </style>
+</head>
+<body>
+
+    <!-- BLOQUE 1: BARRA DE ACCESOS DIRECTOS -->
+    <header>
+        <span class="brand-tag">ÁGORA</span>
+        <button class="config-btn" onclick="configurarApiKey()">⚙️ Gemini Key</button>
+        <button class="config-btn" onclick="configurarGithub()">⚙️ GitHub Config</button>
+        <button class="config-btn" onclick="configurarFirebase()">⚙️ Firebase Config</button>
+        <button class="config-btn" onclick="abrirAjustes()" style="background:#065f46; color:#fff;">🎛️ Ajustes</button>
+        <a href="https://github.com" target="_blank" class="link-btn">GitHub</a>
+        <a href="https://console.firebase.google.com" target="_blank" class="link-btn">Firebase</a>
+        <a href="https://app.netlify.com" target="_blank" class="link-btn">Netlify</a>
+    </header>
+
+    <main>
+        <!-- BLOQUE 2: EDITOR Y HERRAMIENTAS SPK -->
+        <div class="workspace">
+            <div class="toolbar">
+                <div class="toolbar-group">
+                    <button onclick="guardarLocal()">💾 Guardar</button>
+                    <button onclick="probarLocal()" style="background:#2563eb; color:#fff;">▶️ Probar</button>
+                </div>
+                <div class="toolbar-group">
+                    <button onclick="subirAGitHub()" style="background:#059669; color:#fff;">🚀 Subir a GitHub</button>
+                    <button onclick="subirAFirebase()" style="background:#f59e0b; color:#111;">🔥 Subir a Firebase</button>
+                </div>
+            </div>
+
+            <!-- BARRA DE EDICIÓN RÁPIDA ESTILO SPK -->
+            <div class="editor-tools">
+                <button onclick="toolSeleccionarTodo()">📄 Seleccionar Todo</button>
+                <button onclick="toolCopiar()">📋 Copiar</button>
+                <button onclick="toolPegar()">📥 Pegar</button>
+                <button onclick="toolBorrarSeleccion()">🗑️ Borrar Seleccionado</button>
+                <button onclick="toolLimpiarTodo()" style="color:#f87171;">⚠️ Limpiar Todo</button>
+                <button onclick="toolInsertarEstructura()">⚡ Plantilla HTML</button>
+            </div>
+            
+            <textarea id="code-editor" placeholder="Escribí o pegá tu código HTML/JS acá...">&lt;!DOCTYPE html&gt;
+&lt;html&gt;
+&lt;head&gt;
+&lt;style&gt; 
+  body { 
+    background: #121212; 
+    color: #e0e0e0; 
+    text-align: center; 
+    padding-top: 60px; 
+    font-family: sans-serif; 
+  } 
+  h1 { color: #10b981; }
+&lt;/style&gt;
+&lt;/head&gt;
+&lt;body&gt;
+  &lt;h1&gt;Ágora&lt;/h1&gt;
+  &lt;p&gt;Entorno de desarrollo limpio y listo para crear.&lt;/p&gt;
+&lt;/body&gt;
+&lt;/html&gt;</textarea>
+
+            <!-- Panel de Link Generado Automáticamente -->
+            <div id="deploy-info">
+                <div>🌐 <b>Web Online:</b> <a id="deploy-link" href="#" target="_blank"></a></div>
+                <div class="deploy-actions">
+                    <button onclick="copiarLink()">📋 Copiar Link</button>
+                </div>
+            </div>
+        </div>
+
+        <!-- BLOQUE 3: PANEL LATERAL DE LA IA (GEMINI API) -->
+        <div id="ai-panel">
+            <div class="ai-header">
+                <span>Asistente Ágora</span>
+                <button class="ai-close" onclick="cerrarIA()">×</button>
+            </div>
+            <div class="ai-chat-box" id="chat-messages">
+                <div class="msg ai">Bienvenido a Ágora. Escribí tu consulta abajo para recibir ayuda con tu código.</div>
+            </div>
+            <div class="ai-input-area">
+                <input type="text" id="user-input" placeholder="Consultar al asistente..." onkeypress="handleKeyPress(event)">
+                <button onclick="enviarMensajeIA()">Enviar</button>
+            </div>
+        </div>
+    </main>
+
+    <!-- BOTÓN FLOTANTE PARA ABRIR LA IA -->
+    <button id="btn-toggle-ai" type="button">✦</button>
+
+    <script>
+        window.onload = function() {
+            const codigoGuardado = localStorage.getItem('agora_codigo_app');
+            if (codigoGuardado) {
+                document.getElementById('code-editor').value = codigoGuardado;
+            }
+            
+            const ultimoLink = localStorage.getItem('agora_ultimo_link');
+            if (ultimoLink) {
+                mostrarPanelLink(ultimoLink);
+            }
+
+            // Cargar tamaño de fuente guardado en Ajustes
+            const savedFontSize = localStorage.getItem('agora_font_size');
+            if (savedFontSize) {
+                document.documentElement.style.setProperty('--font-size', savedFontSize + 'px');
+            }
+
+            const btnToggleAI = document.getElementById('btn-toggle-ai');
+            if (btnToggleAI) {
+                btnToggleAI.addEventListener('click', toggleIA);
+                btnToggleAI.addEventListener('touchstart', function(e) {
+                    e.preventDefault();
+                    toggleIA();
+                });
+            }
+        };
+
+        function guardarLocal() {
+            const codigo = document.getElementById('code-editor').value;
+            localStorage.setItem('agora_codigo_app', codigo);
+            alert('Proyecto guardado en la memoria local.');
+        }
+
+        function probarLocal() {
+            const codigo = document.getElementById('code-editor').value;
+            const blob = new Blob([codigo], { type: 'text/html;charset=utf-8' });
+            const urlTemporal = URL.createObjectURL(blob);
+            window.open(urlTemporal, '_blank');
+        }
+
+        /* HERRAMIENTAS DE EDICIÓN ESTILO SPK */
+        const editor = document.getElementById('code-editor');
+
+        function toolSeleccionarTodo() {
+            editor.select();
+        }
+
+        function toolCopiar() {
+            editor.select();
+            navigator.clipboard.writeText(editor.value).then(() => {
+                alert('¡Código copiado al portapapeles!');
+            }).catch(err => {
+                alert('Error al copiar. Seleccioná manualmente.');
+            });
+        }
+
+        async function toolPegar() {
+            try {
+                const text = await navigator.clipboard.readText();
+                const start = editor.selectionStart;
+                const end = editor.selectionEnd;
+                const val = editor.value;
+                editor.value = val.substring(0, start) + text + val.substring(end);
+                editor.selectionStart = editor.selectionEnd = start + text.length;
+                alert('¡Contenido pegado con éxito!');
+            } catch (err) {
+                alert('Tu navegador no permite pegar automáticamente. Usá Mantener presionado -> Pegar.');
+            }
+        }
+
+        function toolBorrarSeleccion() {
+            const start = editor.selectionStart;
+            const end = editor.selectionEnd;
+            if (start === end) {
+                alert('Seleccioná el texto que querés borrar.');
+                return;
+            }
+            const val = editor.value;
+            editor.value = val.substring(0, start) + val.substring(end);
+            editor.selectionStart = editor.selectionEnd = start;
+        }
+
+        function toolLimpiarTodo() {
+            if (confirm('¿Vaciar completamente el editor? Perderás lo no guardado.')) {
+                editor.value = '';
+            }
+        }
+
+        function toolInsertarEstructura() {
+            const plantilla = `<!DOCTYPE html>\n<html lang="es">\n<head>\n    <meta charset="UTF-8">\n    <meta name="viewport" content="width=device-width, initial-scale=1.0">\n    <title>Nueva App</title>\n    <style>\n        body { background: #121212; color: #fff; font-family: sans-serif; padding: 20px; }\n    </style>\n</head>\n<body>\n    <h1>Hola Mundo</h1>\n</body>\n</html>`;
+            editor.value = plantilla;
+            alert('Plantilla base HTML insertada.');
+        }
+
+        /* PANEL DE AJUSTES GENERALES */
+        function abrirAjustes() {
+            let fontActual = localStorage.getItem('agora_font_size') || '13';
+            let nuevaFuente = prompt("🎛️ PANEL DE AJUSTES\n\nIngresá el tamaño de letra del editor en píxeles (ej: 12, 14, 16):", fontActual);
+            if (nuevaFuente !== null && !isNaN(nuevaFuente) && nuevaFuente.trim() !== '') {
+                localStorage.setItem('agora_font_size', nuevaFuente.trim());
+                document.documentElement.style.setProperty('--font-size', nuevaFuente.trim() + 'px');
+                alert('Tamaño de fuente actualizado con éxito.');
+            }
+        }
+
+        function toggleIA() {
+            const panel = document.getElementById('ai-panel');
+            if (panel) {
+                panel.classList.toggle('open');
+            }
+        }
+
+        function cerrarIA() {
+            const panel = document.getElementById('ai-panel');
+            if (panel) {
+                panel.classList.remove('open');
+            }
+        }
+
+        function configurarApiKey() {
+            let keyActual = localStorage.getItem('gemini_api_key') || '';
+            let nuevaKey = prompt("Ingresá tu API Key de Google AI Studio:", keyActual);
+            if (nuevaKey !== null) {
+                localStorage.setItem('gemini_api_key', nuevaKey.trim());
+                alert('API Key de Gemini configurada correctamente.');
+            }
+        }
+
+        function configurarGithub() {
+            let repoActual = localStorage.getItem('gh_repo') || 'usuario/repositorio';
+            let tokenActual = localStorage.getItem('gh_token') || '';
+            
+            let nuevoRepo = prompt("Ingresá tu repositorio de GitHub (ej: usuario/tu-repo):", repoActual);
+            if (nuevoRepo !== null) {
+                localStorage.setItem('gh_repo', nuevoRepo.trim());
+                let nuevoToken = prompt("Ingresá tu Token de GitHub (Personal Access Token):", tokenActual);
+                if (nuevoToken !== null) {
+                    localStorage.setItem('gh_token', nuevoToken.trim());
+                    alert('Configuración de GitHub guardada con éxito.');
+                }
+            }
+        }
+
+        function configurarFirebase() {
+            let urlActual = localStorage.getItem('firebase_url') || 'https://tu-proyecto.web.app';
+            let nuevaUrl = prompt("Ingresá la URL de tu Hosting de Firebase (ej: https://mi-app.web.app):", urlActual);
+            if (nuevaUrl !== null) {
+                localStorage.setItem('firebase_url', nuevaUrl.trim());
+                alert('Configuración de Firebase guardada con éxito.');
+            }
+        }
+
+                 function mostrarPanelLink(url) {
+            const deployInfo = document.getElementById('deploy-info');
+            const deployLink = document.getElementById('deploy-link');
+            deployLink.href = url;
+            deployLink.textContent = url;
+            deployInfo.style.display = 'flex';
+        }
+
+        function copiarLink() {
+            const url = document.getElementById('deploy-link').href;
+            navigator.clipboard.writeText(url).then(() => {
+                alert('¡Link copiado al portapapeles!');
+            });
+        }
+
+        async function subirAGitHub() {
+            const repo = localStorage.getItem('gh_repo');
+            const token = localStorage.getItem('gh_token');
+            const contenido = document.getElementById('code-editor').value;
+
+            if (!repo || !token) {
+                alert('Falta configurar GitHub. Tocá arriba en "⚙️ GitHub Config".');
+                return;
+            }
+
+            if (!confirm(`¿Subir los cambios directamente a ${repo} (archivo index.html)?`)) return;
+
+            const path = 'index.html';
+            const url = `https://api.github.com/repos/${repo}/contents/${path}`;
+
+            try {
+                let sha = '';
+                const getRes = await fetch(url, {
+                    headers: { 'Authorization': `token ${token}` }
+                });
+                if (getRes.ok) {
+                    const fileData = await getRes.json();
+                    sha = fileData.sha;
+                }
+
+                const bodyData = {
+                    message: "Actualización automática desde Ágora",
+                    content: btoa(unescape(encodeURIComponent(contenido)))
+                };
+                if (sha) bodyData.sha = sha;
+
+                const putRes = await fetch(url, {
+                    method: 'PUT',
+                    headers: {
+                        'Authorization': `token ${token}`,
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify(bodyData)
+                });
+
+                if (putRes.ok) {
+                    const partesRepo = repo.split('/');
+                    const usuario = partesRepo[0];
+                    const nombreRepo = partesRepo[1];
+                    const linkWeb = `https://${usuario}.github.io/${nombreRepo}/`;
+
+                    localStorage.setItem('agora_ultimo_link', linkWeb);
+                    mostrarPanelLink(linkWeb);
+
+                    alert('¡Código subido a GitHub con éxito! Ya tenés tu link disponible abajo.');
+                } else {
+                    const errJson = await putRes.json();
+                    alert('Error al subir: ' + (errJson.message || 'Verificá tu token y repo.'));
+                }
+            } catch (err) {
+                alert('Error de red al intentar conectar con GitHub.');
+            }
+        }
+
+        function subirAFirebase() {
+            const firebaseLink = localStorage.getItem('firebase_url');
+            if (!firebaseLink) {
+                alert('Falta configurar Firebase. Tocá arriba en "⚙️ Firebase Config".');
+                configurarFirebase();
+                return;
+            }
+
+            localStorage.setItem('agora_ultimo_link', firebaseLink);
+            mostrarPanelLink(firebaseLink);
+            alert('¡Enlace de Firebase listo! Acceso directo activado.');
+        }
+
+        function handleKeyPress(e) {
+            if (e.key === 'Enter') enviarMensajeIA();
+        }
+
+        function escapeHTML(str) {
+            return str.replace(/[&<>'"]/g, 
+                tag => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', "'": '&#39;', '"': '&quot;' }[tag] || tag)
+            );
+        }
+
+        async function enviarMensajeIA() {
+            const input = document.getElementById('user-input');
+            const texto = input.value.trim();
+            if (!texto) return;
+
+            const apiKey = localStorage.getItem('gemini_api_key');
+            if (!apiKey) {
+                alert('Configurá primero tu API Key en el botón superior "⚙️ Gemini Key".');
+                return;
+            }
+
+            const chatBox = document.getElementById('chat-messages');
+            chatBox.innerHTML += `<div class="msg user">${escapeHTML(texto)}</div>`;
+            input.value = '';
+            chatBox.scrollTop = chatBox.scrollHeight;
+
+            const loadingId = 'loading-' + Date.now();
+            chatBox.innerHTML += `<div class="msg ai" id="${loadingId}">Procesando...</div>`;
+            chatBox.scrollTop = chatBox.scrollHeight;
+
+            try {
+                const url = `https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent?key=${apiKey}`;
+                const response = await fetch(url, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({
+                        contents: [{ parts: [{ text: texto }] }]
+                    })
+                });
+
+                const data = await response.json();
+                document.getElementById(loadingId).remove();
+
+                if (data.candidates && data.candidates[0].content) {
+                    const respuestaIA = data.candidates[0].content.parts[0].text;
+                    chatBox.innerHTML += `<div class="msg ai">${escapeHTML(respuestaIA)}</div>`;
+                } else {
+                    chatBox.innerHTML += `<div class="msg ai" style="color:#f87171;">Error de autenticación. Verificá tu API Key.</div>`;
+                }
+            } catch (error) {
+                document.getElementById(loadingId).remove();
+                chatBox.innerHTML += `<div class="msg ai" style="color:#f87171;">Error de red al conectar con el servidor.</div>`;
+            }
+            chatBox.scrollTop = chatBox.scrollHeight;
+        }
+    </script>
+</body>
+</html>
