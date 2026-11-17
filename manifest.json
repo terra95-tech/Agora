@@ -1,13 +1,22 @@
 {
-  "background_color": "#ffffff",
-  "dir": "ltr",
+  "name": "Ágora",
+  "short_name": "Ágora",
+  "start_url": "./index.html",
   "display": "standalone",
-  "name": "terra95-tech.github",
-  "orientation": "any",
-  "scope": "/",
-  "short_name": "terra95-tech.github",
-  "start_url": "/",
-  "theme_color": "#ffffff",
-  "id": "814190697169",
-  "description": "Entorno de desarrollo web ágil para programar y desplegar aplicaciones directo desde el celular o la PC."
+  "background_color": "#121212",
+  "theme_color": "#10b981",
+  "icons": [
+    {
+      "src": "icon192.png",
+      "sizes": "192x192",
+      "type": "image/png",
+      "purpose": "any maskable"
+    },
+    {
+      "src": "icon512.png",
+      "sizes": "512x512",
+      "type": "image/png",
+      "purpose": "any maskable"
+    }
+  ]
 }
