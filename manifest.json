@@ -1,0 +1,13 @@
+{
+  "background_color": "#ffffff",
+  "dir": "ltr",
+  "display": "standalone",
+  "name": "terra95-tech.github",
+  "orientation": "any",
+  "scope": "/",
+  "short_name": "terra95-tech.github",
+  "start_url": "/",
+  "theme_color": "#ffffff",
+  "id": "814190697169",
+  "description": "Entorno de desarrollo web ágil para programar y desplegar aplicaciones directo desde el celular o la PC."
+}
