@@ -4,6 +4,11 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
     <title>Ágora</title>
+    <!-- Configuración de íconos PWA y Android (APK) -->
+    <link rel="icon" type="image/png" href="icon512.png">
+    <link rel="apple-touch-icon" href="icon512.png">
+    <link rel="manifest" href="manifest.json">
+    <meta name="theme-color" content="#121212">
     <style>
         :root {
             --bg-color: #121212;        /* Gris grafito profundo anti-deslumbramiento */
@@ -679,7 +684,7 @@
                     })
                 });
 
-                const data = await response.json();
+                const data =@ response.json();
                 document.getElementById(loadingId).remove();
 
                 if (data.candidates && data.candidates[0].content) {
