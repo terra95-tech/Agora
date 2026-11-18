@@ -572,10 +572,11 @@
             </div>
             <div class="panel-body">
                 <div class="panel-section">
-                    <h3>Subir Imagen / Recurso</h3>
+                    <h3>Subir Imagen / Recurso Libre</h3>
+                    <p style="font-size: 11px; color: var(--text-muted); margin-bottom: 8px;">Cualquier formato o proporción (logos, fotos, banners).</p>
                     <label class="custom-file-upload">
                         📂 Seleccionar del Dispositivo
-                        <input type="file" id="file-input-hidden" accept="image/*" onchange="procesarArchivoSubido(event)">
+                        <input type="file" accept="image/*" onchange="procesarArchivoSubido(event)">
                     </label>
                     <div style="margin-top: 10px; font-size: 11px; color: var(--text-muted);">Mini-Galería de Archivos:</div>
                     <div class="gallery-grid" id="gallery-container">
@@ -585,7 +586,7 @@
 
                 <div class="panel-section">
                     <h3>Conversor de Íconos PWA / APK</h3>
-                    <p style="font-size: 11px; color: var(--text-muted); margin-bottom: 8px;">Redimensiona cualquier imagen localmente.</p>
+                    <p style="font-size: 11px; color: var(--text-muted); margin-bottom: 8px;">Genera tamaños exactos (192x192 y 512x512).</p>
                     <label class="custom-file-upload" style="border-color: #2563eb; color: #60a5fa;">
                         🎯 Elegir Imagen Original
                         <input type="file" accept="image/*" onchange="cargarImagenParaConvertir(event)">
@@ -694,7 +695,7 @@
             });
         }
 
-        // GESTOR DE ARCHIVOS Y GALERÍA
+        // GESTOR DE ARCHIVOS Y GALERÍA (LIBRE)
         let imagenParaConvertirData = null;
         let nombreImagenOriginal = 'icono';
 
@@ -1092,4 +1093,3 @@
     </script>
 </body>
 </html>
-
