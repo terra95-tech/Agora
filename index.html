@@ -137,7 +137,7 @@
             background: var(--accent-hover);
         }
 
-        /* Mini Barra de Herramientas SPK (Seleccionar, Copiar, Pegar, Borrar, Limpiar) */
+        /* Mini Barra de Herramientas SPK */
         .editor-tools {
             background: #181818;
             padding: 6px 12px;
@@ -224,13 +224,13 @@
             touch-action: manipulation;
         }
 
-        /* Bloque 3: Panel Lateral Deslizable de la IA (80% de ancho) */
-        #ai-panel {
+        /* Paneles Laterales Deslizables */
+        .side-panel {
             position: absolute;
             top: 0;
             right: -100%;
-            width: 80%;
-            max-width: 450px;
+            width: 85%;
+            max-width: 480px;
             height: 100%;
             background: var(--panel-bg);
             border-left: 1px solid var(--border-color);
@@ -240,10 +240,10 @@
             z-index: 99999;
             box-shadow: -8px 0 24px rgba(0,0,0,0.8);
         }
-        #ai-panel.open {
+        .side-panel.open {
             right: 0;
         }
-        .ai-header {
+        .panel-header {
             padding: 14px;
             background: var(--editor-bg);
             display: flex;
@@ -254,7 +254,7 @@
             font-size: 13px;
             color: var(--accent-color);
         }
-        .ai-close {
+        .panel-close {
             background: none;
             border: none;
             color: var(--text-muted);
@@ -263,6 +263,30 @@
             line-height: 1;
             touch-action: manipulation;
         }
+
+        /* Contenido de Paneles */
+        .panel-body {
+            flex: 1;
+            padding: 14px;
+            overflow-y: auto;
+            display: flex;
+            flex-direction: column;
+            gap: 16px;
+            -webkit-overflow-scrolling: touch;
+        }
+        .panel-section {
+            background: var(--editor-bg);
+            border: 1px solid var(--border-color);
+            border-radius: 8px;
+            padding: 12px;
+        }
+        .panel-section h3 {
+            font-size: 13px;
+            color: var(--accent-color);
+            margin-bottom: 8px;
+        }
+
+        /* IA Chat Box */
         .ai-chat-box {
             flex: 1;
             padding: 12px;
@@ -324,28 +348,146 @@
             touch-action: manipulation;
         }
 
-        /* Botón Flotante para abrir la IA */
-        #btn-toggle-ai {
-            position: fixed;
-            bottom: 20px;
-            right: 20px;
+        /* Estilos Media Manager y Conversor */
+        .custom-file-upload {
+            background: #252525;
+            color: var(--text-color);
+            border: 1px dashed var(--accent-color);
+            padding: 12px;
+            text-align: center;
+            border-radius: 6px;
+            cursor: pointer;
+            font-size: 12px;
+            font-weight: 600;
+        }
+        .custom-file-upload:active {
+            background: #333;
+        }
+        #file-input-hidden {
+            display: none;
+        }
+        .gallery-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(90px, 1fr));
+            gap: 8px;
+            max-height: 180px;
+            overflow-y: auto;
+            margin-top: 8px;
+        }
+        .gallery-item {
+            background: #252525;
+            border: 1px solid var(--border-color);
+            border-radius: 6px;
+            padding: 4px;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 4px;
+        }
+        .gallery-item img {
+            width: 100%;
+            height: 60px;
+            object-fit: cover;
+            border-radius: 4px;
+        }
+        .gallery-item button {
             background: var(--accent-color);
             color: #111;
             border: none;
+            font-size: 10px;
+            padding: 3px 6px;
+            border-radius: 4px;
+            cursor: pointer;
+            width: 100%;
+            font-weight: 600;
+        }
+        .converter-preview {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            margin-top: 8px;
+        }
+        .converter-preview img {
             width: 50px;
             height: 50px;
-            border-radius: 50%;
-            font-size: 20px;
-            box-shadow: 0 4px 16px rgba(16, 185, 129, 0.5);
+            object-fit: cover;
+            border-radius: 4px;
+            border: 1px solid var(--border-color);
+        }
+        .converter-actions {
+            display: flex;
+            gap: 6px;
+            margin-top: 8px;
+        }
+        .converter-actions button {
+            flex: 1;
+            background: #2563eb;
+            color: #fff;
+            border: none;
+            padding: 8px;
+            border-radius: 6px;
+            font-size: 11px;
+            font-weight: 600;
             cursor: pointer;
+        }
+
+        /* SaaS Dashboard Styles */
+        .client-card {
+            background: #252525;
+            border: 1px solid var(--border-color);
+            border-radius: 6px;
+            padding: 10px;
+            margin-bottom: 8px;
+            display: flex;
+            flex-direction: column;
+            gap: 6px;
+        }
+        .client-info {
+            font-size: 12px;
+        }
+        .client-actions {
+            display: flex;
+            gap: 6px;
+            flex-wrap: wrap;
+        }
+        .client-actions button {
+            flex: 1;
+            min-width: 45%;
+            padding: 5px;
+            border: none;
+            border-radius: 4px;
+            font-size: 11px;
+            font-weight: 600;
+            cursor: pointer;
+        }
+
+        /* Botones Flotantes */
+        .floating-buttons {
+            position: fixed;
+            bottom: 20px;
+            right: 20px;
+            display: flex;
+            flex-direction: column;
+            gap: 10px;
             z-index: 99998;
+        }
+        .float-btn {
+            background: var(--accent-color);
+            color: #111;
+            border: none;
+            width: 48px;
+            height: 48px;
+            border-radius: 50%;
+            font-size: 18px;
+            box-shadow: 0 4px 16px rgba(16, 185, 129, 0.4);
+            cursor: pointer;
             display: flex;
             align-items: center;
             justify-content: center;
             transition: transform 0.2s;
             touch-action: manipulation;
         }
-        #btn-toggle-ai:active {
+        .float-btn:active {
             transform: scale(0.95);
         }
     </style>
@@ -359,6 +501,8 @@
         <button class="config-btn" onclick="configurarGithub()">⚙️ GitHub Config</button>
         <button class="config-btn" onclick="configurarFirebase()">⚙️ Firebase Config</button>
         <button class="config-btn" onclick="abrirAjustes()" style="background:#065f46; color:#fff;">🎛️ Ajustes</button>
+        <button class="config-btn" onclick="togglePanel('media-panel')" style="background:#2563eb; color:#fff;">📁 Gestor</button>
+        <button class="config-btn" onclick="togglePanel('saas-panel')" style="background:#f59e0b; color:#111;">📊 SaaS Panel</button>
         <a href="https://github.com" target="_blank" class="link-btn">GitHub</a>
         <a href="https://console.firebase.google.com" target="_blank" class="link-btn">Firebase</a>
         <a href="https://app.netlify.com" target="_blank" class="link-btn">Netlify</a>
@@ -420,11 +564,69 @@
             </div>
         </div>
 
-        <!-- BLOQUE 3: PANEL LATERAL DE LA IA (GEMINI API) -->
-        <div id="ai-panel">
-            <div class="ai-header">
+        <!-- PANEL LATERAL: GESTOR DE ARCHIVOS Y REDUCTOR DE ÍCONOS -->
+        <div id="media-panel" class="side-panel">
+            <div class="panel-header">
+                <span>📁 Gestor de Archivos & Conversor</span>
+                <button class="panel-close" onclick="togglePanel('media-panel')">×</button>
+            </div>
+            <div class="panel-body">
+                <div class="panel-section">
+                    <h3>Subir Imagen / Recurso</h3>
+                    <label class="custom-file-upload">
+                        📂 Seleccionar del Dispositivo
+                        <input type="file" id="file-input-hidden" accept="image/*" onchange="procesarArchivoSubido(event)">
+                    </label>
+                    <div style="margin-top: 10px; font-size: 11px; color: var(--text-muted);">Mini-Galería de Archivos:</div>
+                    <div class="gallery-grid" id="gallery-container">
+                        <div style="font-size: 11px; color: var(--text-muted); grid-column: span 2;">No hay archivos cargados.</div>
+                    </div>
+                </div>
+
+                <div class="panel-section">
+                    <h3>Conversor de Íconos PWA / APK</h3>
+                    <p style="font-size: 11px; color: var(--text-muted); margin-bottom: 8px;">Redimensiona cualquier imagen localmente.</p>
+                    <label class="custom-file-upload" style="border-color: #2563eb; color: #60a5fa;">
+                        🎯 Elegir Imagen Original
+                        <input type="file" accept="image/*" onchange="cargarImagenParaConvertir(event)">
+                    </label>
+                    <div id="converter-ui" style="display:none; margin-top: 10px;">
+                        <div class="converter-preview">
+                            <img id="preview-source-img" src="" alt="Vista previa">
+                            <span id="preview-source-name" style="font-size: 11px; word-break: break-all;">imagen.png</span>
+                        </div>
+                        <div class="converter-actions">
+                            <button onclick="descargarIcono(192)">⬇️ 192x192</button>
+                            <button onclick="descargarIcono(512)" style="background: #059669;">⬇️ 512x512</button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- PANEL LATERAL: SAAS DASHBOARD DE CLIENTES Y LICENCIAS -->
+        <div id="saas-panel" class="side-panel">
+            <div class="panel-header">
+                <span>📊 Panel de Clientes y Licencias</span>
+                <button class="panel-close" onclick="togglePanel('saas-panel')">×</button>
+            </div>
+            <div class="panel-body">
+                <div class="panel-section">
+                    <h3>Control de Proyectos SaaS</h3>
+                    <p style="font-size: 11px; color: var(--text-muted); margin-bottom: 10px;">Gestioná el estado de los abonos de tus aplicaciones desplegadas.</p>
+                    <button onclick="agregarNuevoProyectoSaas()" class="custom-file-upload" style="margin-bottom: 10px; width: 100%;">➕ Registrar Nuevo Proyecto</button>
+                    <div id="saas-clients-list">
+                        <div style="font-size: 11px; color: var(--text-muted);">No hay proyectos registrados.</div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- PANEL LATERAL DE LA IA (GEMINI API) -->
+        <div id="ai-panel" class="side-panel">
+            <div class="panel-header">
                 <span>Asistente Ágora</span>
-                <button class="ai-close" onclick="cerrarIA()">×</button>
+                <button class="panel-close" onclick="togglePanel('ai-panel')">×</button>
             </div>
             <div class="ai-chat-box" id="chat-messages">
                 <div class="msg ai">Bienvenido a Ágora. Escribí tu consulta abajo para recibir ayuda con tu código.</div>
@@ -436,24 +638,35 @@
         </div>
     </main>
 
-    <!-- BOTÓN FLOTANTE PARA ABRIR LA IA -->
-    <button id="btn-toggle-ai" type="button">✦</button>
+    <!-- BOTONES FLOTANTES -->
+    <div class="floating-buttons">
+        <button class="float-btn" onclick="togglePanel('media-panel')" title="Gestor">📁</button>
+        <button class="float-btn" onclick="togglePanel('saas-panel')" title="SaaS Panel" style="background:#f59e0b; color:#111;">📊</button>
+        <button class="float-btn" onclick="togglePanel('ai-panel')" title="Asistente IA">✦</button>
+    </div>
 
     <script>
-        // REGISTRO AUTOMÁTICO DE SERVICE WORKER PARA ACTUALIZACIONES PWA/APK
+        // REGISTRO DE SERVICE WORKER PARA PWA
         if ('serviceWorker' in navigator) {
             window.addEventListener('load', () => {
                 navigator.serviceWorker.register('sw.js')
-                    .then(reg => console.log('Service Worker registrado con éxito:', reg.scope))
-                    .catch(err => console.log('Error al registrar Service Worker:', err));
+                    .then(reg => console.log('Service Worker registrado:', reg.scope))
+                    .catch(err => console.log('Error SW:', err));
             });
         }
 
         window.onload = function() {
+            const editor = document.getElementById('code-editor');
+            
+            // AUTOGUARDADO EN TIEMPO REAL (LOCALSTORAGE)
             const codigoGuardado = localStorage.getItem('agora_codigo_app');
-            if (codigoGuardado) {
-                document.getElementById('code-editor').value = codigoGuardado;
+            if (codigoGuardado !== null) {
+                editor.value = codigoGuardado;
             }
+            
+            editor.addEventListener('input', () => {
+                localStorage.setItem('agora_codigo_app', editor.value);
+            });
             
             const ultimoLink = localStorage.getItem('agora_ultimo_link');
             if (ultimoLink) {
@@ -465,31 +678,226 @@
                 document.documentElement.style.setProperty('--font-size', savedFontSize + 'px');
             }
 
-            const btnToggleAI = document.getElementById('btn-toggle-ai');
-            if (btnToggleAI) {
-                btnToggleAI.addEventListener('click', toggleIA);
-                btnToggleAI.addEventListener('touchstart', function(e) {
-                    e.preventDefault();
-                    toggleIA();
-                });
-            }
+            cargarGaleriaLocal();
+            renderSaasClients();
         };
 
+        // GESTIÓN DE PANELES LATERALES
+        function togglePanel(panelId) {
+            ['media-panel', 'saas-panel', 'ai-panel'].forEach(id => {
+                const p = document.getElementById(id);
+                if (id === panelId) {
+                    p.classList.toggle('open');
+                } else {
+                    p.classList.remove('open');
+                }
+            });
+        }
+
+        // GESTOR DE ARCHIVOS Y GALERÍA
+        let imagenParaConvertirData = null;
+        let nombreImagenOriginal = 'icono';
+
+        function procesarArchivoSubido(event) {
+            const file = event.target.files[0];
+            if (!file) return;
+
+            const reader = new FileReader();
+            reader.onload = function(e) {
+                const base64Data = e.target.result;
+                let archivos = JSON.parse(localStorage.getItem('agora_media_files') || '[]');
+                archivos.push({ name: file.name, data: base64Data });
+                localStorage.setItem('agora_media_files', JSON.stringify(archivos));
+                cargarGaleriaLocal();
+                alert('¡Imagen subida al gestor con éxito!');
+            };
+            reader.readAsDataURL(file);
+        }
+
+        function cargarGaleriaLocal() {
+            const container = document.getElementById('gallery-container');
+            let archivos = JSON.parse(localStorage.getItem('agora_media_files') || '[]');
+            
+            if (archivos.length === 0) {
+                container.innerHTML = `<div style="font-size: 11px; color: var(--text-muted); grid-column: span 2;">No hay archivos cargados.</div>`;
+                return;
+            }
+
+            container.innerHTML = '';
+            archivos.forEach((file, index) => {
+                const item = document.createElement('div');
+                item.className = 'gallery-item';
+                item.innerHTML = `
+                    <img src="${file.data}" alt="${file.name}">
+                    <button onclick="copiarRutaArchivo(${index})">📋 Copiar Link</button>
+                    <button onclick="eliminarArchivo(${index})" style="background:#ef4444; color:#fff; margin-top:2px;">🗑️ Borrar</button>
+                `;
+                container.appendChild(item);
+            });
+        }
+
+        function copiarRutaArchivo(index) {
+            let archivos = JSON.parse(localStorage.getItem('agora_media_files') || '[]');
+            if (archivos[index]) {
+                navigator.clipboard.writeText(archivos[index].data).then(() => {
+                    alert('¡Enlace copiado al portapapeles!');
+                });
+            }
+        }
+
+        function eliminarArchivo(index) {
+            let archivos = JSON.parse(localStorage.getItem('agora_media_files') || '[]');
+            archivos.splice(index, 1);
+            localStorage.setItem('agora_media_files', JSON.stringify(archivos));
+            cargarGaleriaLocal();
+        }
+
+        // CONVERSOR DE ÍCONOS
+        function cargarImagenParaConvertir(event) {
+            const file = event.target.files[0];
+            if (!file) return;
+            nombreImagenOriginal = file.name.substring(0, file.name.lastIndexOf('.')) || 'icono';
+
+            const reader = new FileReader();
+            reader.onload = function(e) {
+                imagenParaConvertirData = e.target.result;
+                document.getElementById('preview-source-img').src = imagenParaConvertirData;
+                document.getElementById('preview-source-name').textContent = file.name;
+                document.getElementById('converter-ui').style.display = 'block';
+            };
+            reader.readAsDataURL(file);
+        }
+
+        function descargarIcono(size) {
+            if (!imagenParaConvertirData) return;
+
+            const img = new Image();
+            img.onload = function() {
+                const canvas = document.createElement('canvas');
+                canvas.width = size;
+                canvas.height = size;
+                const ctx = canvas.getContext('2d');
+                ctx.drawImage(img, 0, 0, size, size);
+
+                const dataURL = canvas.toDataURL('image/png');
+                const link = document.createElement('a');
+                link.download = `${nombreImagenOriginal}_${size}x${size}.png`;
+                link.href = dataURL;
+                link.click();
+                alert(`¡Ícono de ${size}x${size} descargado con éxito!`);
+            };
+            img.src = imagenParaConvertirData;
+        }
+
+        // PANEL SAAS, LICENCIAS & WHATSAPP DUAL
+        function agregarNuevoProyectoSaas() {
+            let nombre = prompt("Nombre del proyecto o cliente:");
+            if (!nombre) return;
+            let linkProyecto = prompt("URL del proyecto (ej: https://usuario.github.io/repo/):", localStorage.getItem('agora_ultimo_link') || '');
+            let proyectos = JSON.parse(localStorage.getItem('agora_saas_proyectos') || '[]');
+            let vencimiento = new Date();
+            vencimiento.setDate(vencimiento.getDate() + 30); // 30 días de vigencia inicial
+
+            proyectos.push({
+                nombre: nombre,
+                link: linkProyecto || '#',
+                estado: 'activo',
+                vencimiento: vencimiento.toISOString()
+            });
+            localStorage.setItem('agora_saas_proyectos', JSON.stringify(proyectos));
+            renderSaasClients();
+            alert('¡Proyecto registrado con éxito!');
+        }
+
+        function renderSaasClients() {
+            const container = document.getElementById('saas-clients-list');
+            let proyectos = JSON.parse(localStorage.getItem('agora_saas_proyectos') || '[]');
+
+            if (proyectos.length === 0) {
+                container.innerHTML = `<div style="font-size: 11px; color: var(--text-muted);">No hay proyectos registrados.</div>`;
+                return;
+            }
+
+            container.innerHTML = '';
+            proyectos.forEach((p, index) => {
+                let v = new Date(p.vencimiento);
+                let vencido = new Date() > v;
+                let card = document.createElement('div');
+                card.className = 'client-card';
+                card.innerHTML = `
+                    <div class="client-info">
+                        <b>${p.nombre}</b><br>
+                        Link: <a href="${p.link}" target="_blank" style="color: #6ee7b7; word-break: break-all;">${p.link}</a><br>
+                        Estado: <span style="color: ${p.estado === 'activo' && !vencido ? '#10b981' : '#ef4444'}">${p.estado.toUpperCase()} ${vencido ? '(VENCIDO)' : ''}</span><br>
+                        Vence: ${v.toLocaleDateString()}
+                    </div>
+                    <div class="client-actions">
+                        <button onclick="toggleEstadoSaas(${index})" style="background:${p.estado === 'activo' ? '#ef4444' : '#10b981'}; color:#fff;">${p.estado === 'activo' ? 'Pausar' : 'Activar'}</button>
+                        <button onclick="renovarSaas(${index})" style="background:#2563eb; color:#fff;">Renovar 30d</button>
+                        <button onclick="enviarWhatsAppAlquiler(${index})" style="background:#25d366; color:#fff;">💬 WhatsApp (Alquiler)</button>
+                        <button onclick="enviarWhatsAppVenta(${index})" style="background:#059669; color:#fff;">💬 WhatsApp (Venta)</button>
+                    </div>
+                `;
+                container.appendChild(card);
+            });
+        }
+
+        function toggleEstadoSaas(index) {
+            let proyectos = JSON.parse(localStorage.getItem('agora_saas_proyectos') || '[]');
+            proyectos[index].estado = proyectos[index].estado === 'activo' ? 'pausado' : 'activo';
+            localStorage.setItem('agora_saas_proyectos', JSON.stringify(proyectos));
+            renderSaasClients();
+        }
+
+        function renovarSaas(index) {
+            let proyectos = JSON.parse(localStorage.getItem('agora_saas_proyectos') || '[]');
+            let v = new Date(proyectos[index].vencimiento);
+            if (new Date() > v) v = new Date();
+            v.setDate(v.getDate() + 30);
+            proyectos[index].vencimiento = v.toISOString();
+            proyectos[index].estado = 'activo';
+            localStorage.setItem('agora_saas_proyectos', JSON.stringify(proyectos));
+            renderSaasClients();
+            alert('¡Licencia renovada por 30 días más!');
+        }
+
+        function enviarWhatsAppAlquiler(index) {
+            let proyectos = JSON.parse(localStorage.getItem('agora_saas_proyectos') || '[]');
+            let p = proyectos[index];
+            let v = new Date(p.vencimiento).toLocaleDateString();
+            let mensaje = `Hola ${p.nombre}! Te escribimos desde soporte técnico. Tu aplicación ya se encuentra en línea y actualizada. Podés visitarla acá: ${p.link}. Recordá que tu abono mensual se encuentra activo con vencimiento el ${v}. ¡Cualquier consulta estamos a disposición!`;
+            
+            navigator.clipboard.writeText(mensaje).then(() => {
+                alert('¡Mensaje de WhatsApp (Alquiler) copiado al portapapeles!');
+            }).catch(() => {
+                prompt("Copiá tu mensaje:", mensaje);
+            });
+        }
+
+        function enviarWhatsAppVenta(index) {
+            let proyectos = JSON.parse(localStorage.getItem('agora_saas_proyectos') || '[]');
+            let p = proyectos[index];
+            let mensaje = `Hola ${p.nombre}! Te escribimos para hacerte entrega oficial de tu aplicación web definitiva. Ya se encuentra funcionando y lista para usar en el siguiente enlace: ${p.link}. ¡Esperamos que disfrutes de tu plataforma!`;
+            
+            navigator.clipboard.writeText(mensaje).then(() => {
+                alert('¡Mensaje de WhatsApp (Venta Final) copiado al portapapeles!');
+            }).catch(() => {
+                prompt("Copiá tu mensaje:", mensaje);
+            });
+        }
+
+        // FUNCIONES DE EDICIÓN Y GESTIÓN DE CÓDIGO
+        const editor = document.getElementById('code-editor');
+
         function guardarLocal() {
-            const codigo = document.getElementById('code-editor').value;
-            localStorage.setItem('agora_codigo_app', codigo);
+            localStorage.setItem('agora_codigo_app', editor.value);
             alert('Proyecto guardado en la memoria local.');
         }
 
         function probarLocal() {
-            const codigo = document.getElementById('code-editor').value;
-            const blob = new Blob([codigo], { type: 'text/html;charset=utf-8' });
-            const urlTemporal = URL.createObjectURL(blob);
-            window.open(urlTemporal, '_blank');
+            const blob = new Blob([editor.value], { type: 'text/html;charset=utf-8' });
+            window.open(URL.createObjectURL(blob), '_blank');
         }
-
-        /* HERRAMIENTAS DE EDICIÓN ESTILO SPK */
-        const editor = document.getElementById('code-editor');
 
         function toolSeleccionarTodo() {
             editor.focus();
@@ -499,11 +907,7 @@
         function toolCopiar() {
             editor.focus();
             editor.select();
-            navigator.clipboard.writeText(editor.value).then(() => {
-                alert('¡Código copiado al portapapeles!');
-            }).catch(err => {
-                alert('Error al copiar. Seleccioná manualmente.');
-            });
+            navigator.clipboard.writeText(editor.value).then(() => alert('¡Código copiado!'));
         }
 
         async function toolPegar() {
@@ -512,12 +916,12 @@
                 const text = await navigator.clipboard.readText();
                 const start = editor.selectionStart;
                 const end = editor.selectionEnd;
-                const val = editor.value;
-                editor.value = val.substring(0, start) + text + val.substring(end);
+                editor.value = editor.value.substring(0, start) + text + editor.value.substring(end);
                 editor.selectionStart = editor.selectionEnd = start + text.length;
+                localStorage.setItem('agora_codigo_app', editor.value);
                 alert('¡Contenido pegado con éxito!');
             } catch (err) {
-                alert('Tu navegador no permite pegar automáticamente. Usá Mantener presionado -> Pegar.');
+                alert('Tu navegador no permite pegar automáticamente.');
             }
         }
 
@@ -529,79 +933,49 @@
                 alert('Seleccioná el texto que querés borrar.');
                 return;
             }
-            const val = editor.value;
-            editor.value = val.substring(0, start) + val.substring(end);
+            editor.value = editor.value.substring(0, start) + editor.value.substring(end);
             editor.selectionStart = editor.selectionEnd = start;
+            localStorage.setItem('agora_codigo_app', editor.value);
         }
 
         function toolLimpiarTodo() {
-            if (confirm('¿Vaciar completamente el editor? Perderás lo no guardado.')) {
+            if (confirm('¿Vaciar completamente el editor?')) {
                 editor.value = '';
+                localStorage.setItem('agora_codigo_app', '');
             }
         }
 
         function toolInsertarEstructura() {
-            const plantilla = `<!DOCTYPE html>\n<html lang="es">\n<head>\n    <meta charset="UTF-8">\n    <meta name="viewport" content="width=device-width, initial-scale=1.0">\n    <title>Nueva App</title>\n    <style>\n        body { background: #121212; color: #fff; font-family: sans-serif; padding: 20px; }\n    </style>\n</head>\n<body>\n    <h1>Hola Mundo</h1>\n</body>\n</html>`;
-            editor.value = plantilla;
-            alert('Plantilla base HTML insertada.');
+            editor.value = `<!DOCTYPE html>\n<html lang="es">\n<head>\n    <meta charset="UTF-8">\n    <meta name="viewport" content="width=device-width, initial-scale=1.0">\n    <title>App Cliente / Dashboard onSnapshot</title>\n    <!-- Firebase SDK y onSnapshot para tiempo real -->\n    <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-app-compat.js"><\\/script>\n    <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-firestore-compat.js"><\\/script>\n    <style>\n        body { background: #121212; color: #fff; font-family: sans-serif; padding: 20px; text-align: center; }\n        .paywall { position: fixed; top:0; left:0; width:100%; height:100%; background:rgba(0,0,0,0.95); display:flex; flex-direction:column; justify-content:center; align-items:center; z-index:99999; padding:20px; }\n        .paywall h2 { color: #f59e0b; margin-bottom: 10px; }\n    </style>\n</head>\n<body>\n    <!-- Cartel de bloqueo automático por abono vencido o pausado -->\n    <div id=\"paywall-modal\" class=\"paywall\" style=\"display:none;\">\n        <h2>⚠️ Servicio Pausado o Vencido</h2>\n        <p>El abono de esta aplicación requiere renovación para continuar operando en línea.</p>\n    </div>\n\n    <h1>Panel del Cliente (En tiempo real)</h1>\n    <div id=\"app-content\">Cargando datos desde la nube...</div>\n\n    <script>\n        // Configuración Firebase del cliente (Reemplazar con tus credenciales)\n        // const firebaseConfig = { ... };\n        // firebase.initializeApp(firebaseConfig);\n        // const db = firebase.firestore();\n        // \n        // db.collection(\"licencias\").doc(\"estado_proyecto\").onSnapshot((doc) => {\n        //     if (doc.exists && doc.data().estado !== \"activo\") {\n        //         document.getElementById(\"paywall-modal\").style.display = \"flex\";\n        //     } else {\n        //         document.getElementById(\"paywall-modal\").style.display = \"none\";\n        //     }\n        // });\n    <\\/script>\n</body>\n</html>`;
+            localStorage.setItem('agora_codigo_app', editor.value);
+            alert('Plantilla base con onSnapshot y paywall insertada.');
         }
 
-        /* PANEL DE AJUSTES GENERALES */
         function abrirAjustes() {
             let fontActual = localStorage.getItem('agora_font_size') || '13';
-            let nuevaFuente = prompt("🎛️ PANEL DE AJUSTES\n\nIngresá el tamaño de letra del editor en píxeles (ej: 12, 14, 16):", fontActual);
-            if (nuevaFuente !== null && !isNaN(nuevaFuente) && nuevaFuente.trim() !== '') {
+            let nuevaFuente = prompt("🎛️ PANEL DE AJUSTES\n\nTamaño de letra del editor en píxeles:", fontActual);
+            if (nuevaFuente && !isNaN(nuevaFuente)) {
                 localStorage.setItem('agora_font_size', nuevaFuente.trim());
                 document.documentElement.style.setProperty('--font-size', nuevaFuente.trim() + 'px');
-                alert('Tamaño de fuente actualizado con éxito.');
-            }
-        }
-
-        function toggleIA() {
-            const panel = document.getElementById('ai-panel');
-            if (panel) {
-                panel.classList.toggle('open');
-            }
-        }
-
-        function cerrarIA() {
-            const panel = document.getElementById('ai-panel');
-            if (panel) {
-                panel.classList.remove('open');
+                alert('Tamaño actualizado.');
             }
         }
 
         function configurarApiKey() {
-            let keyActual = localStorage.getItem('gemini_api_key') || '';
-            let nuevaKey = prompt("Ingresá tu API Key de Google AI Studio:", keyActual);
-            if (nuevaKey !== null) {
-                localStorage.setItem('gemini_api_key', nuevaKey.trim());
-                alert('API Key de Gemini configurada correctamente.');
-            }
+            let key = prompt("Ingresá tu API Key de Google AI Studio:", localStorage.getItem('gemini_api_key') || '');
+            if (key !== null) localStorage.setItem('gemini_api_key', key.trim());
         }
 
         function configurarGithub() {
-            let repoActual = localStorage.getItem('gh_repo') || 'usuario/repositorio';
-            let tokenActual = localStorage.getItem('gh_token') || '';
-            
-            let nuevoRepo = prompt("Ingresá tu repositorio de GitHub (ej: usuario/tu-repo):", repoActual);
-            if (nuevoRepo !== null) {
-                localStorage.setItem('gh_repo', nuevoRepo.trim());
-                let nuevoToken = prompt("Ingresá tu Token de GitHub (Personal Access Token):", tokenActual);
-                if (nuevoToken !== null) {
-                    localStorage.setItem('gh_token', nuevoToken.trim());
-                    alert('Configuración de GitHub guardada con éxito.');
-                }
-            }
+            let repo = prompt("Repositorio GitHub (usuario/repo):", localStorage.getItem('gh_repo') || '');
+            if (repo !== null) localStorage.setItem('gh_repo', repo.trim());
+            let token = prompt("Token Personal de GitHub:", localStorage.getItem('gh_token') || '');
+            if (token !== null) localStorage.setItem('gh_token', token.trim());
         }
 
         function configurarFirebase() {
-            let urlActual = localStorage.getItem('firebase_url') || 'https://tu-proyecto.web.app';
-            let nuevaUrl = prompt("Ingresá la URL de tu Hosting de Firebase (ej: https://mi-app.web.app):", urlActual);
-            if (nuevaUrl !== null) {
-                localStorage.setItem('firebase_url', nuevaUrl.trim());
-                alert('Configuración de Firebase guardada con éxito.');
-            }
+            let url = prompt("URL de Firebase Hosting:", localStorage.getItem('firebase_url') || '');
+            if (url !== null) localStorage.setItem('firebase_url', url.trim());
         }
 
         function mostrarPanelLink(url) {
@@ -613,92 +987,62 @@
         }
 
         function copiarLink() {
-            const url = document.getElementById('deploy-link').href;
-            navigator.clipboard.writeText(url).then(() => {
-                alert('¡Link copiado al portapapeles!');
-            });
+            navigator.clipboard.writeText(document.getElementById('deploy-link').href).then(() => alert('¡Link copiado!'));
         }
 
         async function subirAGitHub() {
             const repo = localStorage.getItem('gh_repo');
             const token = localStorage.getItem('gh_token');
-            const contenido = document.getElementById('code-editor').value;
-
             if (!repo || !token) {
-                alert('Falta configurar GitHub. Tocá arriba en "⚙️ GitHub Config".');
+                alert('Falta configurar GitHub.');
+                configurarGithub();
                 return;
             }
+            if (!confirm(`¿Subir a ${repo} (index.html)?`)) return;
 
-            if (!confirm(`¿Subir los cambios directamente a ${repo} (archivo index.html)?`)) return;
-
-            const path = 'index.html';
-            const url = `https://api.github.com/repos/${repo}/contents/${path}`;
-
+            const url = `https://api.github.com/repos/${repo}/contents/index.html`;
             try {
                 let sha = '';
-                const getRes = await fetch(url, {
-                    headers: { 'Authorization': `token ${token}` }
-                });
-                if (getRes.ok) {
-                    const fileData = await getRes.json();
-                    sha = fileData.sha;
-                }
-
-                const bodyData = {
-                    message: "Actualización automática desde Ágora",
-                    content: btoa(unescape(encodeURIComponent(contenido)))
-                };
-                if (sha) bodyData.sha = sha;
+                const getRes = await fetch(url, { headers: { 'Authorization': `token ${token}` } });
+                if (getRes.ok) sha = (await getRes.json()).sha;
 
                 const putRes = await fetch(url, {
                     method: 'PUT',
-                    headers: {
-                        'Authorization': `token ${token}`,
-                        'Content-Type': 'application/json'
-                    },
-                    body: JSON.stringify(bodyData)
+                    headers: { 'Authorization': `token ${token}`, 'Content-Type': 'application/json' },
+                    body: JSON.stringify({
+                        message: "Actualización automática desde Ágora",
+                        content: btoa(unescape(encodeURIComponent(editor.value))),
+                        sha: sha || undefined
+                    })
                 });
 
                 if (putRes.ok) {
-                    const partesRepo = repo.split('/');
-                    const usuario = partesRepo[0];
-                    const nombreRepo = partesRepo[1];
-                    const linkWeb = `https://${usuario}.github.io/${nombreRepo}/`;
-
+                    const [user, repoName] = repo.split('/');
+                    const linkWeb = `https://${user}.github.io/${repoName}/`;
                     localStorage.setItem('agora_ultimo_link', linkWeb);
                     mostrarPanelLink(linkWeb);
-
-                    alert('¡Código subido a GitHub con éxito! Ya tenés tu link disponible abajo.');
+                    alert('¡Subido a GitHub con éxito!');
                 } else {
-                    const errJson = await putRes.json();
-                    alert('Error al subir: ' + (errJson.message || 'Verificá tu token y repo.'));
+                    alert('Error al subir los cambios.');
                 }
             } catch (err) {
-                alert('Error de red al intentar conectar con GitHub.');
+                alert('Error de red con GitHub.');
             }
         }
 
         function subirAFirebase() {
-            const firebaseLink = localStorage.getItem('firebase_url');
-            if (!firebaseLink) {
-                alert('Falta configurar Firebase. Tocá arriba en "⚙️ Firebase Config".');
+            const link = localStorage.getItem('firebase_url');
+            if (!link) {
                 configurarFirebase();
                 return;
             }
-
-            localStorage.setItem('agora_ultimo_link', firebaseLink);
-            mostrarPanelLink(firebaseLink);
-            alert('¡Enlace de Firebase listo! Acceso directo activado.');
+            localStorage.setItem('agora_ultimo_link', link);
+            mostrarPanelLink(link);
+            alert('¡Enlace de Firebase activado!');
         }
 
         function handleKeyPress(e) {
             if (e.key === 'Enter') enviarMensajeIA();
-        }
-
-        function escapeHTML(str) {
-            return str.replace(/[&<>'"]/g, 
-                tag => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', "'": '&#39;', '"': '&quot;' }[tag] || tag)
-            );
         }
 
         async function enviarMensajeIA() {
@@ -708,7 +1052,7 @@
 
             const apiKey = localStorage.getItem('gemini_api_key');
             if (!apiKey) {
-                alert('Configurá primero tu API Key en el botón superior "⚙️ Gemini Key".');
+                alert('Configurá tu API Key de Gemini.');
                 return;
             }
 
@@ -719,33 +1063,33 @@
 
             const loadingId = 'loading-' + Date.now();
             chatBox.innerHTML += `<div class="msg ai" id="${loadingId}">Procesando...</div>`;
-            chatBox.scrollTop = chatBox.scrollHeight;
 
             try {
-                const url = `https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent?key=${apiKey}`;
-                const response = await fetch(url, {
+                const response = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent?key=${apiKey}`, {
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({
-                        contents: [{ parts: [{ text: texto }] }]
-                    })
+                    body: JSON.stringify({ contents: [{ parts: [{ text: texto }] }] })
                 });
 
                 const data = await response.json();
                 document.getElementById(loadingId).remove();
 
                 if (data.candidates && data.candidates[0].content) {
-                    const respuestaIA = data.candidates[0].content.parts[0].text;
-                    chatBox.innerHTML += `<div class="msg ai">${escapeHTML(respuestaIA)}</div>`;
+                    chatBox.innerHTML += `<div class="msg ai">${escapeHTML(data.candidates[0].content.parts[0].text)}</div>`;
                 } else {
-                    chatBox.innerHTML += `<div class="msg ai" style="color:#f87171;">Error de autenticación. Verificá tu API Key.</div>`;
+                    chatBox.innerHTML += `<div class="msg ai" style="color:#f87171;">Error de autenticación con la API Key.</div>`;
                 }
             } catch (error) {
                 document.getElementById(loadingId).remove();
-                chatBox.innerHTML += `<div class="msg ai" style="color:#f87171;">Error de red al conectar con el servidor.</div>`;
+                chatBox.innerHTML += `<div class="msg ai" style="color:#f87171;">Error de red al conectar con IA.</div>`;
             }
             chatBox.scrollTop = chatBox.scrollHeight;
+        }
+
+        function escapeHTML(str) {
+            return str.replace(/[&<>'"]/g, tag => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', "'": '&#39;', '"': '&quot;' }[tag] || tag));
         }
     </script>
 </body>
 </html>
+
