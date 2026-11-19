@@ -817,8 +817,7 @@
             </div>
         </div>
 
-        <!-- PANEL LATERAL DE LA IA (GEMINI API) -->
-        <div id="ai-panel" class="side-panel">
+       <div id="ai-panel" class="side-panel">
             <div class="panel-header">
                 <span>Asistente Ágora</span>
                 <button class="panel-close" onclick="togglePanel('ai-panel')">×</button>
@@ -856,8 +855,64 @@
         <button class="float-btn" onclick="togglePanel('ai-panel')" title="Asistente IA">✦</button>
     </div>
 <script>
-        // API KEY DE GEMINI PARA EL ASISTENTE ÁGORA
-        const GEMINI_API_KEY = 'AQ.Ab8RN6KDrhj1qE72j34tbU7olgMmRSKx_R6BxnzgqyXg8gKAfQ'; 
+        // CONFIGURACIÓN ÚNICA DE GEMINI PARA EL ASISTENTE ÁGORA
+        const GEMINI_API_KEY = 'AQ.Ab8RN6KDrhj1qE72j34tbU7olgMmRSKx_R6BxnzgqyXg8gKAfQ';
+        const GEMINI_MODEL = 'gemini-3.8-flash';
+        const GEMINI_API_URL = `https://generativelanguage.googleapis.com/v1beta/models/${GEMINI_MODEL}:generateContent`;
+
+        function appendAgoraChatMessage(text, role = 'ai') {
+            const chatBox = document.getElementById('chat-messages');
+            if (!chatBox) return;
+            const bubble = document.createElement('div');
+            bubble.className = `msg ${role}`;
+            bubble.textContent = text;
+            chatBox.appendChild(bubble);
+            chatBox.scrollTop = chatBox.scrollHeight;
+        }
+
+        async function enviarMensajeIA() {
+            const input = document.getElementById('user-input');
+            if (!input) return;
+            const prompt = input.value.trim();
+            if (!prompt) return;
+
+            appendAgoraChatMessage(prompt, 'user');
+            input.value = '';
+
+            try {
+                const response = await fetch(`${GEMINI_API_URL}?key=${encodeURIComponent(GEMINI_API_KEY)}`, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify({
+                        contents: [
+                            {
+                                parts: [{ text: prompt }]
+                            }
+                        ]
+                    })
+                });
+
+                if (!response.ok) {
+                    const errorPayload = await response.json().catch(() => ({}));
+                    const detail = errorPayload?.error?.message || `HTTP ${response.status}`;
+                    appendAgoraChatMessage(`Error HTTP en ${GEMINI_MODEL}: ${detail}`, 'ai');
+                    return;
+                }
+
+                const data = await response.json();
+                const reply =
+                    data?.candidates?.[0]?.content?.parts
+                        ?.map(part => part.text || '')
+                        .join('')
+                        .trim() || 'Respuesta vacía del modelo.';
+
+                appendAgoraChatMessage(reply, 'ai');
+            } catch (err) {
+                appendAgoraChatMessage(`Error de red al consultar Gemini: ${err.message}`, 'ai');
+            }
+        }
 
         // REGISTRO DE SERVICE WORKER PARA PWA
         if ('serviceWorker' in navigator) {
