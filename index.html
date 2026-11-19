@@ -911,6 +911,103 @@ function vincularEventosAsistenteAgora() {
     }
 }
 
+async function enviarMensajeIA() {
+    const input = document.getElementById('user-input');
+    if (!input) return;
+    const texto = input.value.trim();
+    if (!texto) return;
+
+    const chatBox = document.getElementById('chat-messages');
+    if (!chatBox) return;
+
+    chatBox.innerHTML += `<div class="msg user">${escapeHTML(texto)}</div>`;
+    input.value = '';
+    chatBox.scrollTop = chatBox.scrollHeight;
+
+    const loadingId = 'loading-' + Date.now();
+    chatBox.innerHTML += `<div class="msg ai" id="${loadingId}">Procesando con Gemini (${escapeHTML(GEMINI_MODEL)})...</div>`;
+    chatBox.scrollTop = chatBox.scrollHeight;
+
+    if (!GEMINI_API_KEY) {
+        const el = document.getElementById(loadingId);
+        if (el) el.remove();
+        chatBox.innerHTML += `<div class="msg ai" style="color:#f87171;">Configurá tu constante GEMINI_API_KEY en el código antes de enviar consultas.</div>`;
+        chatBox.scrollTop = chatBox.scrollHeight;
+        return;
+    }
+
+    const endpoint = `https://generativelanguage.googleapis.com/v1beta/models/${encodeURIComponent(GEMINI_MODEL)}:generateContent?key=${encodeURIComponent(GEMINI_API_KEY)}`;
+    const maxReintentos = 3;
+
+    try {
+        let response = null;
+        let rawText = '';
+        let data = {};
+
+        for (let intento = 1; intento <= maxReintentos; intento++) {
+            const loadingEl = document.getElementById(loadingId);
+            if (loadingEl) {
+                loadingEl.textContent = intento === 1
+                    ? `Procesando con Gemini (${GEMINI_MODEL})...`
+                    : `Servidor saturado (503). Reintentando (${intento}/${maxReintentos})...`;
+            }
+
+            response = await fetch(endpoint, {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json'
+                },
+                body: JSON.stringify({
+                    contents: [{
+                        parts: [{ text: texto }]
+                    }]
+                })
+            });
+
+            rawText = await response.text();
+            try {
+                data = rawText ? JSON.parse(rawText) : {};
+            } catch (_) {
+                data = { error: { message: rawText || 'Respuesta no JSON' } };
+            }
+
+            if (response.status !== 503 || intento === maxReintentos) {
+                break;
+            }
+
+            await new Promise(resolve => setTimeout(resolve, 1500 * intento));
+        }
+
+        const loadingEl = document.getElementById(loadingId);
+        if (loadingEl) loadingEl.remove();
+
+        if (!response.ok) {
+            const detalleError = (data && data.error && data.error.message) ? data.error.message : (rawText || 'Error de respuesta de la API');
+            chatBox.innerHTML += `<div class="msg ai" style="color:#f87171;">Error HTTP ${response.status}: ${escapeHTML(detalleError)}</div>`;
+            chatBox.scrollTop = chatBox.scrollHeight;
+            return;
+        }
+
+        const respuestaIA = data &&
+            data.candidates &&
+            data.candidates[0] &&
+            data.candidates[0].content &&
+            data.candidates[0].content.parts &&
+            data.candidates[0].content.parts[0] &&
+            data.candidates[0].content.parts[0].text;
+
+        if (respuestaIA) {
+            chatBox.innerHTML += `<div class="msg ai">${escapeHTML(respuestaIA)}</div>`;
+        } else {
+            chatBox.innerHTML += `<div class="msg ai" style="color:#f87171;">La API respondió sin texto utilizable.</div>`;
+        }
+    } catch (error) {
+        const loadingEl = document.getElementById(loadingId);
+        if (loadingEl) loadingEl.remove();
+        chatBox.innerHTML += `<div class="msg ai" style="color:#f87171;">Error de conexión o red al consultar Gemini: ${escapeHTML(error && error.message ? error.message : String(error))}</div>`;
+    }
+    chatBox.scrollTop = chatBox.scrollHeight;
+}
 document.addEventListener('DOMContentLoaded', vincularEventosAsistenteAgora);
 window.addEventListener('load', vincularEventosAsistenteAgora);
 
