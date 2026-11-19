@@ -860,6 +860,18 @@ const GEMINI_API_KEY = 'AQ.Ab8RN6KDrhj1qE72j34tbU7olgMmRSKx_R6BxnzgqyXg8gKAfQ';
 const GEMINI_MODEL = 'gemini-3.8-flash';
 const GEMINI_API_URL = `https://generativelanguage.googleapis.com/v1beta/models/${GEMINI_MODEL}:generateContent`;
 
+function escapeHTMLSafe(str) {
+    if (typeof escapeHTML === 'function') {
+        return escapeHTML(str);
+    }
+    return String(str)
+        .replace(/&/g, '&amp;')
+        .replace(/</g, '&lt;')
+        .replace(/>/g, '&gt;')
+        .replace(/"/g, '&quot;')
+        .replace(/'/g, '&#39;');
+}
+
 function appendAgoraChatMessage(text, role = 'ai') {
     const chatBox = document.getElementById('chat-messages');
     if (!chatBox) return;
@@ -920,12 +932,12 @@ async function enviarMensajeIA() {
     const chatBox = document.getElementById('chat-messages');
     if (!chatBox) return;
 
-    chatBox.innerHTML += `<div class="msg user">${escapeHTML(texto)}</div>`;
+    chatBox.innerHTML += `<div class="msg user">${escapeHTMLSafe(texto)}</div>`;
     input.value = '';
     chatBox.scrollTop = chatBox.scrollHeight;
 
     const loadingId = 'loading-' + Date.now();
-    chatBox.innerHTML += `<div class="msg ai" id="${loadingId}">Procesando con Gemini (${escapeHTML(GEMINI_MODEL)})...</div>`;
+    chatBox.innerHTML += `<div class="msg ai" id="${loadingId}">Procesando con Gemini (${escapeHTMLSafe(GEMINI_MODEL)})...</div>`;
     chatBox.scrollTop = chatBox.scrollHeight;
 
     if (!GEMINI_API_KEY) {
@@ -982,8 +994,19 @@ async function enviarMensajeIA() {
         if (loadingEl) loadingEl.remove();
 
         if (!response.ok) {
-            const detalleError = (data && data.error && data.error.message) ? data.error.message : (rawText || 'Error de respuesta de la API');
-            chatBox.innerHTML += `<div class="msg ai" style="color:#f87171;">Error HTTP ${response.status}: ${escapeHTML(detalleError)}</div>`;
+            let detalleError = (data && data.error && data.error.message)
+                ? data.error.message
+                : (rawText || 'Error de respuesta de la API');
+
+            if (response.status === 503) {
+                detalleError = 'Los servidores de Gemini están con mucha demanda en este momento. Probá nuevamente en unos segundos.';
+            } else if (response.status === 429) {
+                detalleError = 'Se alcanzó el límite temporal de consultas. Esperá un momento y volvé a intentar.';
+            } else if (response.status === 400 || response.status === 403) {
+                detalleError = `Revisá la API Key o el modelo configurado (${detalleError}).`;
+            }
+
+            chatBox.innerHTML += `<div class="msg ai" style="color:#f87171;">Error HTTP ${response.status}: ${escapeHTMLSafe(detalleError)}</div>`;
             chatBox.scrollTop = chatBox.scrollHeight;
             return;
         }
@@ -997,20 +1020,20 @@ async function enviarMensajeIA() {
             data.candidates[0].content.parts[0].text;
 
         if (respuestaIA) {
-            chatBox.innerHTML += `<div class="msg ai">${escapeHTML(respuestaIA)}</div>`;
+            chatBox.innerHTML += `<div class="msg ai">${escapeHTMLSafe(respuestaIA)}</div>`;
         } else {
             chatBox.innerHTML += `<div class="msg ai" style="color:#f87171;">La API respondió sin texto utilizable.</div>`;
         }
     } catch (error) {
         const loadingEl = document.getElementById(loadingId);
         if (loadingEl) loadingEl.remove();
-        chatBox.innerHTML += `<div class="msg ai" style="color:#f87171;">Error de conexión o red al consultar Gemini: ${escapeHTML(error && error.message ? error.message : String(error))}</div>`;
+        chatBox.innerHTML += `<div class="msg ai" style="color:#f87171;">Error de conexión o red al consultar Gemini: ${escapeHTMLSafe(error && error.message ? error.message : String(error))}</div>`;
     }
     chatBox.scrollTop = chatBox.scrollHeight;
 }
+
 document.addEventListener('DOMContentLoaded', vincularEventosAsistenteAgora);
 window.addEventListener('load', vincularEventosAsistenteAgora);
-
 // GESTIÓN DE PANELES LATERALES
 function togglePanel(panelId) {
     ['media-panel', 'saas-panel', 'templates-panel', 'ai-panel'].forEach(id => {
@@ -1021,7 +1044,185 @@ function togglePanel(panelId) {
         } else {
             p.classList.remove('open');
         }
-    });
+    });// CONFIGURACIÓN ÚNICA DE GEMINI PARA EL ASISTENTE ÁGORA
+const GEMINI_API_KEY = 'AQ.Ab8RN6KDrhj1qE72j34tbU7olgMmRSKx_R6BxnzgqyXg8gKAfQ';
+const GEMINI_MODEL = 'gemini-3.8-flash';
+const GEMINI_API_URL = `https://generativelanguage.googleapis.com/v1beta/models/${GEMINI_MODEL}:generateContent`;
+
+function escapeHTMLSafe(str) {
+    if (typeof escapeHTML === 'function') {
+        return escapeHTML(str);
+    }
+    return String(str)
+        .replace(/&/g, '&amp;')
+        .replace(/</g, '&lt;')
+        .replace(/>/g, '&gt;')
+        .replace(/"/g, '&quot;')
+        .replace(/'/g, '&#39;');
+}
+
+function appendAgoraChatMessage(text, role = 'ai') {
+    const chatBox = document.getElementById('chat-messages');
+    if (!chatBox) return;
+    const bubble = document.createElement('div');
+    bubble.className = `msg ${role}`;
+    bubble.textContent = text;
+    chatBox.appendChild(bubble);
+    chatBox.scrollTop = chatBox.scrollHeight;
+}
+
+function vincularEventosAsistenteAgora() {
+    const input = document.getElementById('user-input');
+    const aiPanel = document.getElementById('ai-panel');
+
+    if (input && !input.dataset.agoraBound) {
+        input.dataset.agoraBound = 'true';
+        input.addEventListener('keydown', (e) => {
+            if (e.key === 'Enter' && !e.shiftKey) {
+                e.preventDefault();
+                e.stopImmediatePropagation();
+                enviarMensajeIA();
+            }
+        });
+    }
+
+    if (aiPanel) {
+        const form = aiPanel.querySelector('form');
+        if (form && !form.dataset.agoraBound) {
+            form.dataset.agoraBound = 'true';
+            form.addEventListener('submit', (e) => {
+                e.preventDefault();
+                e.stopImmediatePropagation();
+                enviarMensajeIA();
+            });
+        }
+
+        const sendBtn = Array.from(aiPanel.querySelectorAll('button')).find(
+            btn => btn.textContent.trim().toLowerCase() === 'enviar'
+        );
+        if (sendBtn && !sendBtn.dataset.agoraBound) {
+            sendBtn.dataset.agoraBound = 'true';
+            sendBtn.removeAttribute('onclick');
+            sendBtn.addEventListener('click', (e) => {
+                e.preventDefault();
+                e.stopImmediatePropagation();
+                enviarMensajeIA();
+            });
+        }
+    }
+}
+
+async function enviarMensajeIA() {
+    const input = document.getElementById('user-input');
+    if (!input) return;
+    const texto = input.value.trim();
+    if (!texto) return;
+
+    const chatBox = document.getElementById('chat-messages');
+    if (!chatBox) return;
+
+    chatBox.innerHTML += `<div class="msg user">${escapeHTMLSafe(texto)}</div>`;
+    input.value = '';
+    chatBox.scrollTop = chatBox.scrollHeight;
+
+    const loadingId = 'loading-' + Date.now();
+    chatBox.innerHTML += `<div class="msg ai" id="${loadingId}">Procesando con Gemini (${escapeHTMLSafe(GEMINI_MODEL)})...</div>`;
+    chatBox.scrollTop = chatBox.scrollHeight;
+
+    if (!GEMINI_API_KEY) {
+        const el = document.getElementById(loadingId);
+        if (el) el.remove();
+        chatBox.innerHTML += `<div class="msg ai" style="color:#f87171;">Configurá tu constante GEMINI_API_KEY en el código antes de enviar consultas.</div>`;
+        chatBox.scrollTop = chatBox.scrollHeight;
+        return;
+    }
+
+    const endpoint = `https://generativelanguage.googleapis.com/v1beta/models/${encodeURIComponent(GEMINI_MODEL)}:generateContent?key=${encodeURIComponent(GEMINI_API_KEY)}`;
+    const maxReintentos = 3;
+
+    try {
+        let response = null;
+        let rawText = '';
+        let data = {};
+
+        for (let intento = 1; intento <= maxReintentos; intento++) {
+            const loadingEl = document.getElementById(loadingId);
+            if (loadingEl) {
+                loadingEl.textContent = intento === 1
+                    ? `Procesando con Gemini (${GEMINI_MODEL})...`
+                    : `Servidor saturado (503). Reintentando (${intento}/${maxReintentos})...`;
+            }
+
+            response = await fetch(endpoint, {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json'
+                },
+                body: JSON.stringify({
+                    contents: [{
+                        parts: [{ text: texto }]
+                    }]
+                })
+            });
+
+            rawText = await response.text();
+            try {
+                data = rawText ? JSON.parse(rawText) : {};
+            } catch (_) {
+                data = { error: { message: rawText || 'Respuesta no JSON' } };
+            }
+
+            if (response.status !== 503 || intento === maxReintentos) {
+                break;
+            }
+
+            await new Promise(resolve => setTimeout(resolve, 1500 * intento));
+        }
+
+        const loadingEl = document.getElementById(loadingId);
+        if (loadingEl) loadingEl.remove();
+
+        if (!response.ok) {
+            let detalleError = (data && data.error && data.error.message)
+                ? data.error.message
+                : (rawText || 'Error de respuesta de la API');
+
+            if (response.status === 503) {
+                detalleError = 'Los servidores de Gemini están con mucha demanda en este momento. Probá nuevamente en unos segundos.';
+            } else if (response.status === 429) {
+                detalleError = 'Se alcanzó el límite temporal de consultas. Esperá un momento y volvé a intentar.';
+            } else if (response.status === 400 || response.status === 403) {
+                detalleError = `Revisá la API Key o el modelo configurado (${detalleError}).`;
+            }
+
+            chatBox.innerHTML += `<div class="msg ai" style="color:#f87171;">Error HTTP ${response.status}: ${escapeHTMLSafe(detalleError)}</div>`;
+            chatBox.scrollTop = chatBox.scrollHeight;
+            return;
+        }
+
+        const respuestaIA = data &&
+            data.candidates &&
+            data.candidates[0] &&
+            data.candidates[0].content &&
+            data.candidates[0].content.parts &&
+            data.candidates[0].content.parts[0] &&
+            data.candidates[0].content.parts[0].text;
+
+        if (respuestaIA) {
+            chatBox.innerHTML += `<div class="msg ai">${escapeHTMLSafe(respuestaIA)}</div>`;
+        } else {
+            chatBox.innerHTML += `<div class="msg ai" style="color:#f87171;">La API respondió sin texto utilizable.</div>`;
+        }
+    } catch (error) {
+        const loadingEl = document.getElementById(loadingId);
+        if (loadingEl) loadingEl.remove();
+        chatBox.innerHTML += `<div class="msg ai" style="color:#f87171;">Error de conexión o red al consultar Gemini: ${escapeHTMLSafe(error && error.message ? error.message : String(error))}</div>`;
+    }
+    chatBox.scrollTop = chatBox.scrollHeight;
+}
+
+document.addEventListener('DOMContentLoaded', vincularEventosAsistenteAgora);
+window.addEventListener('load', vincularEventosAsistenteAgora);
 }
 
 // GESTOR DE ARCHIVOS Y GALERÍA (LIBRE)
@@ -1732,9 +1933,9 @@ function copiarRutaArchivo(index) {
                 tplEstado.ownerPass = '1234';
             }
         }
-
-        function guardarBorradorPlantilla(silent) {
-            sincizarFormularioPlantilla();
+sincronizarFormularioPlantilla
+        function guardarBorradorPlasincronizarFormularioPlantillantilla(silent) {
+            sincronizarFormularioPlantilla();
             localStorage.setItem('agora_plantillas_borrador', JSON.stringify(tplEstado));
             if (!silent) {
                 alert('Borrador de plantilla guardado en Ágora.');
@@ -2005,7 +2206,7 @@ renderApp();
         }
 
         function generarPlantillaEnEditor(abrirVistaPrevia) {
-            sincizarFormularioPlantilla();
+            sincronizarFormularioPlantilla();
             if (!tplEstado.negocio) {
                 tplEstado.negocio = 'Mi Proyecto Ágora';
             }
