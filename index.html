@@ -1267,7 +1267,7 @@
             chatBox.scrollTop = chatBox.scrollHeight;
 
             const loadingId = 'loading-' + Date.now();
-            chatBox.innerHTML += `<div class="msg ai" id="${loadingId}">Procesando con Gemini (gemini-2.5-flash)...</div>`;
+            chatBox.innerHTML += `<div class="msg ai" id="${loadingId}">Procesando con Gemini (gemini-3.8-flash)...</div>`;
 
             if (!GEMINI_API_KEY || GEMINI_API_KEY === "PEGA_AQUI_TU_API_KEY_AGORA") {
                 const el = document.getElementById(loadingId);
