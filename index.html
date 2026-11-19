@@ -956,47 +956,7 @@ function vincularEventosAsistenteAgora() {
 }
 
 document.addEventListener('DOMContentLoaded', vincularEventosAsistenteAgora);
-
-// REGISTRO DE SERVICE WORKER PARA PWA
-if ('serviceWorker' in navigator) {
-    window.addEventListener('load', () => {
-        navigator.serviceWorker.register('sw.js')
-            .then(reg => console.log('Service Worker registrado:', reg.scope))
-            .catch(err => console.log('Error SW:', err));
-    });
-}
-
-window.onload = function() {
-    vincularEventosAsistenteAgora();
-
-    const editor = document.getElementById('code-editor');
-
-    // AUTOGUARDADO EN TIEMPO REAL (LOCALSTORAGE)
-    const codigoGuardado = localStorage.getItem('agora_codigo_app');
-    if (codigoGuardado !== null && editor) {
-        editor.value = codigoGuardado;
-    }
-
-    if (editor) {
-        editor.addEventListener('input', () => {
-            localStorage.setItem('agora_codigo_app', editor.value);
-        });
-    }
-
-    const ultimoLink = localStorage.getItem('agora_ultimo_link');
-    if (ultimoLink && typeof mostrarPanelLink === 'function') {
-        mostrarPanelLink(ultimoLink);
-    }
-
-    const savedFontSize = localStorage.getItem('agora_font_size');
-    if (savedFontSize) {
-        document.documentElement.style.setProperty('--font-size', savedFontSize + 'px');
-    }
-
-    if (typeof cargarGaleriaLocal === 'function') cargarGaleriaLocal();
-    if (typeof renderSaasClients === 'function') renderSaasClients();
-    if (typeof cargarEstadoPlantillas === 'function') cargarEstadoPlantillas();
-};
+window.addEventListener('load', vincularEventosAsistenteAgora);
 
 // GESTIÓN DE PANELES LATERALES
 function togglePanel(panelId) {
