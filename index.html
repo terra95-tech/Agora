@@ -286,7 +286,7 @@
             margin-bottom: 8px;
         }
 
-        /* IA Chat Box */
+        /* IA Chat Box + Voz */
         .ai-chat-box {
             flex: 1;
             padding: 12px;
@@ -303,6 +303,7 @@
             border-radius: 8px;
             max-width: 90%;
             word-break: break-word;
+            white-space: pre-wrap;
         }
         .msg.user {
             background: #282828;
@@ -315,6 +316,44 @@
             align-self: flex-start;
             border: 1px solid var(--border-color);
             color: #a7f3d0;
+        }
+        .ai-voice-bar {
+            padding: 6px 10px;
+            background: #141414;
+            border-top: 1px solid var(--border-color);
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            gap: 8px;
+            font-size: 11px;
+            color: var(--text-muted);
+        }
+        .ai-voice-bar select {
+            background: #252525;
+            color: var(--text-color);
+            border: 1px solid var(--border-color);
+            border-radius: 4px;
+            padding: 4px 6px;
+            font-size: 11px;
+            outline: none;
+        }
+        .voice-btn {
+            background: #252525;
+            color: var(--text-color);
+            border: 1px solid var(--border-color);
+            padding: 0 12px;
+            border-radius: 6px;
+            cursor: pointer;
+            font-size: 16px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            touch-action: manipulation;
+        }
+        .voice-btn.listening {
+            background: #dc2626;
+            color: #fff;
+            border-color: #ef4444;
         }
         .ai-input-area {
             padding: 10px;
@@ -461,6 +500,77 @@
             cursor: pointer;
         }
 
+        /* Estilos Sección Plantillas Profesionales */
+        .tpl-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 8px;
+            margin-bottom: 10px;
+        }
+        .tpl-model-btn {
+            background: #252525;
+            color: var(--text-color);
+            border: 1px solid var(--border-color);
+            padding: 8px;
+            border-radius: 6px;
+            font-size: 11px;
+            font-weight: 600;
+            text-align: left;
+            cursor: pointer;
+        }
+        .tpl-model-btn.active {
+            background: #065f46;
+            border-color: var(--accent-color);
+            color: #fff;
+        }
+        .tpl-field {
+            display: flex;
+            flex-direction: column;
+            gap: 4px;
+            margin-bottom: 8px;
+        }
+        .tpl-field label {
+            font-size: 11px;
+            color: var(--text-muted);
+        }
+        .tpl-field input, .tpl-field select, .tpl-field textarea {
+            background: #252525;
+            color: var(--text-color);
+            border: 1px solid var(--border-color);
+            border-radius: 5px;
+            padding: 7px 9px;
+            font-size: 12px;
+            outline: none;
+        }
+        .tpl-item-row {
+            background: #252525;
+            border: 1px solid var(--border-color);
+            border-radius: 6px;
+            padding: 8px;
+            margin-bottom: 6px;
+            font-size: 11px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            gap: 8px;
+        }
+        .tpl-action-row {
+            display: flex;
+            gap: 6px;
+            flex-wrap: wrap;
+            margin-top: 8px;
+        }
+        .tpl-action-row button {
+            flex: 1;
+            min-width: 30%;
+            padding: 8px;
+            border: none;
+            border-radius: 6px;
+            font-size: 11px;
+            font-weight: 600;
+            cursor: pointer;
+        }
+
         /* Botones Flotantes */
         .floating-buttons {
             position: fixed;
@@ -502,6 +612,7 @@
         <button class="config-btn" onclick="abrirAjustes()" style="background:#065f46; color:#fff;">🎛️ Ajustes</button>
         <button class="config-btn" onclick="togglePanel('media-panel')" style="background:#2563eb; color:#fff;">📁 Gestor</button>
         <button class="config-btn" onclick="togglePanel('saas-panel')" style="background:#f59e0b; color:#111;">📊 SaaS Panel</button>
+        <button class="config-btn" onclick="togglePanel('templates-panel')" style="background:#7c3aed; color:#fff;">🧩 Plantillas Profesionales</button>
         <button class="config-btn" onclick="togglePanel('ai-panel')" style="background:#10b981; color:#121212;">✦ Asistente</button>
         <a href="https://github.com" target="_blank" class="link-btn">GitHub</a>
         <a href="https://console.firebase.google.com" target="_blank" class="link-btn">Firebase</a>
@@ -623,6 +734,89 @@
             </div>
         </div>
 
+        <!-- PANEL LATERAL: PLANTILLAS PROFESIONALES (4 MODELOS + CONTRASEÑA FIJA) -->
+        <div id="templates-panel" class="side-panel">
+            <div class="panel-header">
+                <span>🧩 Plantillas Profesionales</span>
+                <button class="panel-close" onclick="togglePanel('templates-panel')">×</button>
+            </div>
+            <div class="panel-body">
+                <div class="panel-section">
+                    <h3>1) Elegí el Modelo (4 Listos para Vender)</h3>
+                    <div class="tpl-grid">
+                        <button type="button" id="tpl-btn-catalogo" class="tpl-model-btn active" onclick="seleccionarModeloPlantilla('catalogo')">🛒 Catálogo / Tienda + Carrito & WhatsApp</button>
+                        <button type="button" id="tpl-btn-turnero" class="tpl-model-btn" onclick="seleccionarModeloPlantilla('turnero')">📅 Turnero / Agenda Servicios & Cursos</button>
+                        <button type="button" id="tpl-btn-carta" class="tpl-model-btn" onclick="seleccionarModeloPlantilla('carta')">🍽️ Carta Digital / Menú Gastronómico</button>
+                        <button type="button" id="tpl-btn-landing" class="tpl-model-btn" onclick="seleccionarModeloPlantilla('landing')">🚀 Landing Page / Portfolio Profesional</button>
+                    </div>
+                </div>
+
+                <div class="panel-section">
+                    <h3>2) Datos del Negocio y Contraseña del Dueño</h3>
+                    <div class="tpl-field">
+                        <label>Nombre del Negocio / Marca</label>
+                        <input type="text" id="tpl-business-name" placeholder="Ej: Mi Tienda / Estudio">
+                    </div>
+                    <div class="tpl-field">
+                        <label>Subtítulo / Descripción Corta</label>
+                        <input type="text" id="tpl-business-sub" placeholder="Ej: Atención personalizada y envíos">
+                    </div>
+                    <div class="tpl-field">
+                        <label>WhatsApp (con código de país, ej: 5492221...)</label>
+                        <input type="text" id="tpl-whatsapp" placeholder="Ej: 5491122334455">
+                    </div>
+                    <div class="tpl-field">
+                        <label>Foto / Banner Principal (URL o subir archivo)</label>
+                        <input type="text" id="tpl-hero-img" placeholder="https://... o elegí imagen abajo">
+                        <label class="custom-file-upload" style="margin-top:4px; padding:8px;">
+                            🖼️ Cargar Foto / Logo desde Dispositivo
+                            <input type="file" accept="image/*" onchange="cargarFotoPlantilla(event, 'hero')">
+                        </label>
+                    </div>
+                    <div class="tpl-field">
+                        <label>🔑 Contraseña Fija del Dueño (para botón ⚙️ en la web generada)</label>
+                        <input type="text" id="tpl-owner-pass" placeholder="Definí la clave del dueño (ej: 1234)">
+                    </div>
+                </div>
+
+                <div class="panel-section">
+                    <h3>3) Cargar Ítems / Productos / Servicios</h3>
+                    <div class="tpl-field">
+                        <label>Título del Ítem</label>
+                        <input type="text" id="tpl-item-title" placeholder="Ej: Combo / Turno / Pack">
+                    </div>
+                    <div class="tpl-field">
+                        <label>Precio (opcional en Landing/Turnero)</label>
+                        <input type="text" id="tpl-item-price" placeholder="Ej: 15000">
+                    </div>
+                    <div class="tpl-field">
+                        <label>Detalle / Duración / Descripción</label>
+                        <input type="text" id="tpl-item-desc" placeholder="Ej: 45 min / Entrega inmediata">
+                    </div>
+                    <div class="tpl-field">
+                        <label>Foto del Ítem (URL o subir archivo)</label>
+                        <input type="text" id="tpl-item-img" placeholder="https://... o subí foto">
+                        <label class="custom-file-upload" style="margin-top:4px; padding:8px;">
+                            📷 Subir Foto del Ítem
+                            <input type="file" accept="image/*" onchange="cargarFotoPlantilla(event, 'item')">
+                        </label>
+                    </div>
+                    <button type="button" onclick="agregarItemPlantilla()" class="custom-file-upload" style="width:100%; border-color:#10b981; color:#6ee7b7;">➕ Agregar Ítem a la Lista</button>
+                    <div id="tpl-items-list" style="margin-top:10px;"></div>
+                </div>
+
+                <div class="panel-section">
+                    <h3>4) Generar en Editor o Probar</h3>
+                    <p style="font-size:11px; color:var(--text-muted); margin-bottom:6px;">El dueño verá el botón <b>⚙️</b> con tu clave fija para editar precios, agregar o quitar ítems, sin poder cambiar la contraseña.</p>
+                    <div class="tpl-action-row">
+                        <button type="button" onclick="generarPlantillaEnEditor(false)" style="background:#059669; color:#fff;">📥 Cargar al Editor</button>
+                        <button type="button" onclick="generarPlantillaEnEditor(true)" style="background:#2563eb; color:#fff;">▶️ Probar Web</button>
+                        <button type="button" onclick="guardarBorradorPlantilla()" style="background:#374151; color:#fff;">💾 Guardar Borrador</button>
+                    </div>
+                </div>
+            </div>
+        </div>
+
         <!-- PANEL LATERAL DE LA IA (GEMINI API) -->
         <div id="ai-panel" class="side-panel">
             <div class="panel-header">
@@ -630,9 +824,24 @@
                 <button class="panel-close" onclick="togglePanel('ai-panel')">×</button>
             </div>
             <div class="ai-chat-box" id="chat-messages">
-                <div class="msg ai">Bienvenido a Ágora. Escribí tu consulta abajo para recibir ayuda con tu código.</div>
+                <div class="msg ai">Bienvenido a Ágora. Escribí tu consulta abajo o usá el micrófono 🎤 en es-AR con traducción automática.</div>
+            </div>
+            <div class="ai-voice-bar">
+                <span id="voice-status">Voz es-AR lista</span>
+                <div>
+                    <label for="voice-target-lang">Traducir a:</label>
+                    <select id="voice-target-lang">
+                        <option value="en" selected>Inglés (EN)</option>
+                        <option value="es">Sin traducir (ES)</option>
+                        <option value="pt">Portugués (PT)</option>
+                        <option value="fr">Francés (FR)</option>
+                        <option value="it">Italiano (IT)</option>
+                        <option value="de">Alemán (DE)</option>
+                    </select>
+                </div>
             </div>
             <div class="ai-input-area">
+                <button type="button" id="voice-btn" class="voice-btn" onclick="toggleDictadoVoz()" title="Dictar en es-AR y traducir">🎤</button>
                 <input type="text" id="user-input" placeholder="Consultar al asistente..." onkeypress="handleKeyPress(event)">
                 <button onclick="enviarMensajeIA()">Enviar</button>
             </div>
@@ -643,12 +852,12 @@
     <div class="floating-buttons">
         <button class="float-btn" onclick="togglePanel('media-panel')" title="Gestor">📁</button>
         <button class="float-btn" onclick="togglePanel('saas-panel')" title="SaaS Panel" style="background:#f59e0b; color:#111;">📊</button>
+        <button class="float-btn" onclick="togglePanel('templates-panel')" title="Plantillas Profesionales" style="background:#7c3aed; color:#fff;">🧩</button>
         <button class="float-btn" onclick="togglePanel('ai-panel')" title="Asistente IA">✦</button>
     </div>
-
-    <script>
-        // API KEY DE GEMINI INTEGRADA Y BLINDADA CON SOPORTE AQ.
-        const GEMINI_API_KEY = "AQ.Ab8RN6Irv2kuJFGTRnMDp_ucCsykXDRDTfovi96kVhkRqPhRtQ";
+<script>
+        // API KEY DE GEMINI PARA EL ASISTENTE ÁGORA
+        const GEMINI_API_KEY = "PEGA_AQUI_TU_API_KEY_AGORA";
 
         // REGISTRO DE SERVICE WORKER PARA PWA
         if ('serviceWorker' in navigator) {
@@ -684,12 +893,14 @@
 
             cargarGaleriaLocal();
             renderSaasClients();
+            cargarEstadoPlantillas();
         };
 
         // GESTIÓN DE PANELES LATERALES
         function togglePanel(panelId) {
-            ['media-panel', 'saas-panel', 'ai-panel'].forEach(id => {
+            ['media-panel', 'saas-panel', 'templates-panel', 'ai-panel'].forEach(id => {
                 const p = document.getElementById(id);
+                if (!p) return;
                 if (id === panelId) {
                     p.classList.toggle('open');
                 } else {
@@ -1040,6 +1251,7 @@
             alert('¡Enlace de Firebase activado!');
         }
 
+        // 1. ASISTENTE CON NUEVA API KEY (GEMINI 2.5 FLASH + MANEJO IF (!RES.OK))
         function handleKeyPress(e) {
             if (e.key === 'Enter') enviarMensajeIA();
         }
@@ -1055,39 +1267,644 @@
             chatBox.scrollTop = chatBox.scrollHeight;
 
             const loadingId = 'loading-' + Date.now();
-            chatBox.innerHTML += `<div class="msg ai" id="${loadingId}">Procesando con Gemini...</div>`;
+            chatBox.innerHTML += `<div class="msg ai" id="${loadingId}">Procesando con Gemini (gemini-2.5-flash)...</div>`;
+
+            if (!GEMINI_API_KEY || GEMINI_API_KEY === "PEGA_AQUI_TU_API_KEY_AGORA") {
+                const el = document.getElementById(loadingId);
+                if (el) el.remove();
+                chatBox.innerHTML += `<div class="msg ai" style="color:#f87171;">Configurá tu constante GEMINI_API_KEY en el código antes de enviar consultas.</div>`;
+                chatBox.scrollTop = chatBox.scrollHeight;
+                return;
+            }
 
             try {
-                // Endpoint optimizado para claves con prefijo AQ. y modelo v1 de gemini-1.5-flash
-                const endpoint = `https://generativelanguage.googleapis.com/v1/models/gemini-1.5-flash:generateContent?key=${GEMINI_API_KEY}`;
-                
+                const endpoint = `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent?key=${encodeURIComponent(GEMINI_API_KEY)}`;
+
                 const response = await fetch(endpoint, {
                     method: 'POST',
-                    headers: { 
-                        'Content-Type': 'application/json' 
+                    headers: {
+                        'Content-Type': 'application/json'
                     },
-                    body: JSON.stringify({ 
-                        contents: [{ 
-                            parts: [{ text: texto }] 
-                        }] 
+                    body: JSON.stringify({
+                        contents: [{
+                            parts: [{ text: texto }]
+                        }]
                     })
                 });
 
-                const data = await response.json();
-                document.getElementById(loadingId).remove();
+                const rawText = await response.text();
+                let data = {};
+                try {
+                    data = rawText ? JSON.parse(rawText) : {};
+                } catch (_) {
+                    data = { error: { message: rawText || 'Respuesta no JSON' } };
+                }
 
-                if (data.candidates && data.candidates[0].content && data.candidates[0].content.parts[0].text) {
-                    chatBox.innerHTML += `<div class="msg ai">${escapeHTML(data.candidates[0].content.parts[0].text)}</div>`;
-                } else if (data.error) {
-                    chatBox.innerHTML += `<div class="msg ai" style="color:#f87171;">Error de API: ${escapeHTML(data.error.message || 'Credencial inválida')}</div>`;
+                const loadingEl = document.getElementById(loadingId);
+                if (loadingEl) loadingEl.remove();
+
+                if (!response.ok) {
+                    const detalleError = (data && data.error && data.error.message) ? data.error.message : (rawText || 'Error de respuesta de la API');
+                    chatBox.innerHTML += `<div class="msg ai" style="color:#f87171;">Error HTTP ${response.status}: ${escapeHTML(detalleError)}</div>`;
+                    chatBox.scrollTop = chatBox.scrollHeight;
+                    return;
+                }
+
+                const respuestaIA = data &&
+                    data.candidates &&
+                    data.candidates[0] &&
+                    data.candidates[0].content &&
+                    data.candidates[0].content.parts &&
+                    data.candidates[0].content.parts[0] &&
+                    data.candidates[0].content.parts[0].text;
+
+                if (respuestaIA) {
+                    chatBox.innerHTML += `<div class="msg ai">${escapeHTML(respuestaIA)}</div>`;
                 } else {
-                    chatBox.innerHTML += `<div class="msg ai" style="color:#f87171;">Error de autenticación con la API Key (AQ.). Verificá la clave.</div>`;
+                    chatBox.innerHTML += `<div class="msg ai" style="color:#f87171;">La API respondió sin texto utilizable.</div>`;
                 }
             } catch (error) {
-                document.getElementById(loadingId).remove();
-                chatBox.innerHTML += `<div class="msg ai" style="color:#f87171;">Error de red al conectar con IA.</div>`;
+                const loadingEl = document.getElementById(loadingId);
+                if (loadingEl) loadingEl.remove();
+                chatBox.innerHTML += `<div class="msg ai" style="color:#f87171;">Error de conexión o red al consultar Gemini: ${escapeHTML(error && error.message ? error.message : String(error))}</div>`;
             }
             chatBox.scrollTop = chatBox.scrollHeight;
+        }
+
+        // 2. BOTÓN DE VOZ EN ES-AR CON TRADUCCIÓN AUTOMÁTICA
+        let recognitionInstance = null;
+        let isRecognizingVoice = false;
+
+        function setVoiceStatus(msg, isError) {
+            const statusEl = document.getElementById('voice-status');
+            if (!statusEl) return;
+            statusEl.textContent = msg;
+            statusEl.style.color = isError ? '#f87171' : 'var(--text-muted)';
+        }
+
+        async function traducirTextoVoz(textoEs, targetLang) {
+            if (!textoEs || targetLang === 'es') return textoEs;
+
+            try {
+                const url = `https://api.mymemory.translated.net/get?q=${encodeURIComponent(textoEs)}&langpair=es|${encodeURIComponent(targetLang)}`;
+                const res = await fetch(url);
+                if (res.ok) {
+                    const json = await res.json();
+                    const translated = json && json.responseData && json.responseData.translatedText;
+                    if (translated && !/MYMEMORY WARNING/i.test(translated)) {
+                        return translated.trim();
+                    }
+                }
+            } catch (_) {
+                // Intenta respaldo con Gemini si está configurada la clave
+            }
+
+            if (GEMINI_API_KEY && GEMINI_API_KEY !== "PEGA_AQUI_TU_API_KEY_AGORA") {
+                try {
+                    const endpoint = `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent?key=${encodeURIComponent(GEMINI_API_KEY)}`;
+                    const prompt = `Translate the following Spanish text accurately to language code "${targetLang}". Return ONLY the translated text with no extra notes or quotes:\n\n${textoEs}`;
+                    const res = await fetch(endpoint, {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify({
+                            contents: [{ parts: [{ text: prompt }] }]
+                        })
+                    });
+                    if (res.ok) {
+                        const data = await res.json();
+                        const out = data &&
+                            data.candidates &&
+                            data.candidates[0] &&
+                            data.candidates[0].content &&
+                            data.candidates[0].content.parts &&
+                            data.candidates[0].content.parts[0] &&
+                            data.candidates[0].content.parts[0].text;
+                        if (out) return out.trim();
+                    }
+                } catch (_) {
+                    // Fallback al texto original si no hay traducción disponible
+                }
+            }
+
+            return textoEs;
+        }
+
+        function toggleDictadoVoz() {
+            const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
+            const btn = document.getElementById('voice-btn');
+            const input = document.getElementById('user-input');
+            const targetSelect = document.getElementById('voice-target-lang');
+
+            if (!SpeechRecognition) {
+                setVoiceStatus('Voz no soportada en este navegador', true);
+                alert('Tu navegador o dispositivo no soporta Web Speech API (SpeechRecognition).');
+                return;
+            }
+
+            if (isRecognizingVoice && recognitionInstance) {
+                try {
+                    recognitionInstance.stop();
+                } catch (_) {}
+                isRecognizingVoice = false;
+                if (btn) btn.classList.remove('listening');
+                setVoiceStatus('Dictado detenido');
+                return;
+            }
+
+            try {
+                const rec = new SpeechRecognition();
+                recognitionInstance = rec;
+                rec.lang = 'es-AR';
+                rec.interimResults = false;
+                rec.maxAlternatives = 1;
+
+                rec.onstart = function() {
+                    isRecognizingVoice = true;
+                    if (btn) btn.classList.add('listening');
+                    setVoiceStatus('Escuchando en es-AR...');
+                };
+
+                rec.onresult = async function(event) {
+                    const transcript = (event.results &&
+                        event.results[0] &&
+                        event.results[0][0] &&
+                        event.results[0][0].transcript) ? event.results[0][0].transcript.trim() : '';
+
+                    if (!transcript) {
+                        setVoiceStatus('No se detectó voz clara', true);
+                        return;
+                    }
+
+                    const targetLang = targetSelect ? targetSelect.value : 'en';
+                    setVoiceStatus(`Traduciendo a ${targetLang.toUpperCase()}...`);
+                    const textoListo = await traducirTextoVoz(transcript, targetLang);
+
+                    if (input) {
+                        input.value = input.value ? `${input.value} ${textoListo}` : textoListo;
+                        input.focus();
+                    }
+                    setVoiceStatus(targetLang === 'es' ? 'Listo para enviar (ES)' : `Traducido (${targetLang.toUpperCase()}) y listo`);
+                };
+
+                rec.onerror = function(event) {
+                    isRecognizingVoice = false;
+                    if (btn) btn.classList.remove('listening');
+                    const errCode = event && event.error ? event.error : 'unknown';
+                    if (errCode === 'not-allowed' || errCode === 'service-not-allowed') {
+                        setVoiceStatus('Permiso de micrófono denegado', true);
+                        alert('Permiso de micrófono denegado. Habilitá el acceso al micrófono para usar 🎤.');
+                    } else if (errCode === 'no-speech') {
+                        setVoiceStatus('No se escuchó voz', true);
+                    } else if (errCode === 'network') {
+                        setVoiceStatus('Error de red en reconocimiento de voz', true);
+                    } else {
+                        setVoiceStatus(`Error de voz: ${errCode}`, true);
+                    }
+                };
+
+                rec.onend = function() {
+                    isRecognizingVoice = false;
+                    if (btn) btn.classList.remove('listening');
+                };
+
+                rec.start();
+            } catch (err) {
+                isRecognizingVoice = false;
+                if (btn) btn.classList.remove('listening');
+                setVoiceStatus('No se pudo iniciar el micrófono', true);
+                alert('No se pudo iniciar el micrófono: ' + (err && err.message ? err.message : String(err)));
+            }
+        }
+
+        // 3. SECCIÓN APARTE "PLANTILLAS PROFESIONALES" (4 MODELOS + CONTRASEÑA FIJA)
+        let tplEstado = {
+            modelo: 'catalogo',
+            negocio: '',
+            subtitulo: '',
+            whatsapp: '',
+            heroImg: '',
+            ownerPass: '1234',
+            items: []
+        };
+
+        function cargarEstadoPlantillas() {
+            const guardado = localStorage.getItem('agora_plantillas_borrador');
+            if (guardado) {
+                try {
+                    const parsed = JSON.parse(guardado);
+                    tplEstado = Object.assign({}, tplEstado, parsed);
+                } catch (_) {}
+            }
+            seleccionarModeloPlantilla(tplEstado.modelo || 'catalogo', true);
+            const nEl = document.getElementById('tpl-business-name');
+            const sEl = document.getElementById('tpl-business-sub');
+            const wEl = document.getElementById('tpl-whatsapp');
+            const hEl = document.getElementById('tpl-hero-img');
+            const pEl = document.getElementById('tpl-owner-pass');
+            if (nEl) nEl.value = tplEstado.negocio || '';
+            if (sEl) sEl.value = tplEstado.subtitulo || '';
+            if (wEl) wEl.value = tplEstado.whatsapp || '';
+            if (hEl) hEl.value = tplEstado.heroImg || '';
+            if (pEl) pEl.value = tplEstado.ownerPass || '1234';
+            renderListaItemsPlantilla();
+        }
+
+        function seleccionarModeloPlantilla(modelo, silent) {
+            tplEstado.modelo = modelo;
+            ['catalogo', 'turnero', 'carta', 'landing'].forEach(m => {
+                const btn = document.getElementById('tpl-btn-' + m);
+                if (btn) {
+                    if (m === modelo) btn.classList.add('active');
+                    else btn.classList.remove('active');
+                }
+            });
+            if (!silent) guardarBorradorPlantilla(true);
+        }
+
+        function cargarFotoPlantilla(event, destino) {
+            const file = event.target.files && event.target.files[0];
+            if (!file) return;
+            const reader = new FileReader();
+            reader.onload = function(e) {
+                if (destino === 'hero') {
+                    const hEl = document.getElementById('tpl-hero-img');
+                    if (hEl) hEl.value = e.target.result;
+                } else {
+                    const iEl = document.getElementById('tpl-item-img');
+                    if (iEl) iEl.value = e.target.result;
+                }
+            };
+            reader.readAsDataURL(file);
+        }
+
+        function agregarItemPlantilla() {
+            const tituloEl = document.getElementById('tpl-item-title');
+            const precioEl = document.getElementById('tpl-item-price');
+            const descEl = document.getElementById('tpl-item-desc');
+            const imgEl = document.getElementById('tpl-item-img');
+
+            const titulo = tituloEl ? tituloEl.value.trim() : '';
+            const precio = precioEl ? precioEl.value.trim() : '';
+            const desc = descEl ? descEl.value.trim() : '';
+            const img = imgEl ? imgEl.value.trim() : '';
+
+            if (!titulo) {
+                alert('Ingresá al menos el título del ítem.');
+                return;
+            }
+
+            tplEstado.items.push({
+                id: 'item_' + Date.now() + '_' + Math.floor(Math.random() * 1000),
+                title: titulo,
+                price: precio || '0',
+                desc: desc,
+                img: img
+            });
+
+            if (tituloEl) tituloEl.value = '';
+            if (precioEl) precioEl.value = '';
+            if (descEl) descEl.value = '';
+            if (imgEl) imgEl.value = '';
+
+            renderListaItemsPlantilla();
+            guardarBorradorPlantilla(true);
+        }
+
+        function quitarItemPlantilla(index) {
+            tplEstado.items.splice(index, 1);
+            renderListaItemsPlantilla();
+            guardarBorradorPlantilla(true);
+        }
+
+        function renderListaItemsPlantilla() {
+            const cont = document.getElementById('tpl-items-list');
+            if (!cont) return;
+            if (!tplEstado.items || tplEstado.items.length === 0) {
+                cont.innerHTML = `<div style="font-size:11px; color:var(--text-muted);">Sin ítems cargados todavía.</div>`;
+                return;
+            }
+            cont.innerHTML = '';
+            tplEstado.items.forEach((it, idx) => {
+                const row = document.createElement('div');
+                row.className = 'tpl-item-row';
+                row.innerHTML = `
+                    <div>
+                        <b>${escapeHTML(it.title)}</b>${it.price && it.price !== '0' ? ` — $${escapeHTML(it.price)}` : ''}<br>
+                        <span style="color:var(--text-muted);">${escapeHTML(it.desc || '')}</span>
+                    </div>
+                    <button type="button" onclick="quitarItemPlantilla(${idx})" style="background:#ef4444; color:#fff; border:none; border-radius:4px; padding:4px 8px; cursor:pointer; font-size:11px;">✕</button>
+                `;
+                cont.appendChild(row);
+            });
+        }
+
+        function sincronizarFormularioPlantilla() {
+            const nEl = document.getElementById('tpl-business-name');
+            const sEl = document.getElementById('tpl-business-sub');
+            const wEl = document.getElementById('tpl-whatsapp');
+            const hEl = document.getElementById('tpl-hero-img');
+            const pEl = document.getElementById('tpl-owner-pass');
+
+            tplEstado.negocio = nEl ? nEl.value.trim() : tplEstado.negocio;
+            tplEstado.subtitulo = sEl ? sEl.value.trim() : tplEstado.subtitulo;
+            tplEstado.whatsapp = wEl ? wEl.value.trim() : tplEstado.whatsapp;
+            tplEstado.heroImg = hEl ? hEl.value.trim() : tplEstado.heroImg;
+            const passIngresada = pEl ? pEl.value.trim() : '';
+            if (passIngresada) {
+                tplEstado.ownerPass = passIngresada;
+            } else if (!tplEstado.ownerPass) {
+                tplEstado.ownerPass = '1234';
+            }
+        }
+
+        function guardarBorradorPlantilla(silent) {
+            sincizarFormularioPlantilla();
+            localStorage.setItem('agora_plantillas_borrador', JSON.stringify(tplEstado));
+            if (!silent) {
+                alert('Borrador de plantilla guardado en Ágora.');
+            }
+        }
+
+        function construirHtmlPlantillaVendible(cfg) {
+            const safeData = JSON.stringify({
+                modelo: cfg.modelo || 'catalogo',
+                negocio: cfg.negocio || 'Mi Negocio',
+                subtitulo: cfg.subtitulo || '',
+                whatsapp: (cfg.whatsapp || '').replace(/\D/g, ''),
+                heroImg: cfg.heroImg || '',
+                ownerPass: String(cfg.ownerPass || '1234'),
+                items: Array.isArray(cfg.items) ? cfg.items : []
+            }).replace(/</g, '\\u003c');
+
+            return `<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>${escapeHTML(cfg.negocio || 'Proyecto Web')}</title>
+<style>
+  * { box-sizing: border-box; margin: 0; padding: 0; font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif; }
+  body { background: #121212; color: #e5e7eb; padding-bottom: 80px; }
+  header { background: #1e1e1e; border-bottom: 1px solid #2d2d2d; padding: 14px 16px; display: flex; justify-content: space-between; align-items: center; position: sticky; top: 0; z-index: 20; }
+  .brand { font-size: 16px; font-weight: 700; color: #10b981; }
+  .gear-btn { background: #27272a; color: #f3f4f6; border: 1px solid #3f3f46; border-radius: 8px; padding: 7px 11px; font-size: 15px; cursor: pointer; }
+  .hero { padding: 18px 16px; text-align: center; background: #181818; border-bottom: 1px solid #262626; }
+  .hero img { max-width: 100%; max-height: 220px; border-radius: 10px; margin-bottom: 12px; object-fit: cover; }
+  .hero p { color: #9ca3af; font-size: 13px; margin-top: 4px; }
+  .container { max-width: 820px; margin: 0 auto; padding: 16px; }
+  .grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(230px, 1fr)); gap: 12px; }
+  .card { background: #1e1e1e; border: 1px solid #2d2d2d; border-radius: 10px; padding: 12px; display: flex; flex-direction: column; gap: 8px; }
+  .card img { width: 100%; height: 140px; object-fit: cover; border-radius: 7px; }
+  .price { color: #10b981; font-weight: 700; font-size: 14px; }
+  .desc { color: #9ca3af; font-size: 12px; }
+  .btn { background: #10b981; color: #111; border: none; border-radius: 7px; padding: 9px 12px; font-weight: 600; font-size: 12px; cursor: pointer; text-decoration: none; display: inline-block; text-align: center; }
+  .btn-sec { background: #2563eb; color: #fff; }
+  .cart-bar { position: fixed; bottom: 0; left: 0; right: 0; background: #1e1e1e; border-top: 1px solid #2d2d2d; padding: 12px 16px; display: flex; justify-content: space-between; align-items: center; z-index: 30; }
+  #owner-modal { display: none; position: fixed; inset: 0; background: rgba(0,0,0,0.88); z-index: 99; padding: 16px; overflow-y: auto; }
+  .modal-box { max-width: 480px; margin: 24px auto; background: #1e1e1e; border: 1px solid #3f3f46; border-radius: 12px; padding: 16px; }
+  .modal-box h3 { color: #10b981; margin-bottom: 10px; font-size: 15px; }
+  .modal-box input { width: 100%; background: #141414; color: #fff; border: 1px solid #3f3f46; border-radius: 6px; padding: 8px; margin-bottom: 8px; font-size: 13px; }
+  .edit-row { background: #181818; border: 1px solid #2d2d2d; border-radius: 8px; padding: 10px; margin-bottom: 8px; }
+  .note-lock { font-size: 11px; color: #9ca3af; margin-bottom: 10px; }
+</style>
+</head>
+<body>
+<header>
+  <div class="brand" id="view-brand"></div>
+  <button class="gear-btn" onclick="abrirPanelDueno()" title="Administrar">⚙️</button>
+</header>
+
+<section class="hero">
+  <div id="view-hero-img"></div>
+  <h1 id="view-title" style="font-size:20px;"></h1>
+  <p id="view-sub"></p>
+</section>
+
+<div class="container">
+  <div class="grid" id="view-items"></div>
+</div>
+
+<div class="cart-bar" id="view-footer-bar"></div>
+
+<div id="owner-modal">
+  <div class="modal-box">
+    <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:10px;">
+      <h3>⚙️ Panel del Dueño</h3>
+      <button class="btn" style="background:#374151; color:#fff;" onclick="cerrarPanelDueno()">Cerrar</button>
+    </div>
+    <p class="note-lock">Editá precios, agregá o quitá ítems. La contraseña de acceso está controlada por el creador y no puede modificarse desde aquí.</p>
+    <div id="owner-items-editor"></div>
+    <div style="background:#181818; border:1px dashed #10b981; border-radius:8px; padding:10px; margin-top:10px;">
+      <div style="font-size:12px; font-weight:600; color:#6ee7b7; margin-bottom:6px;">+ Agregar nuevo ítem</div>
+      <input type="text" id="new-item-title" placeholder="Nombre del ítem">
+      <input type="text" id="new-item-price" placeholder="Precio">
+      <input type="text" id="new-item-desc" placeholder="Descripción o detalle">
+      <button class="btn" style="width:100%;" onclick="agregarItemDueno()">Agregar Ítem</button>
+    </div>
+  </div>
+</div>
+
+<script>
+const BASE_CFG = ${safeData};
+const STORAGE_KEY = 'tpl_store_' + btoa(unescape(encodeURIComponent(BASE_CFG.negocio + '_' + BASE_CFG.modelo))).slice(0, 24);
+let state = JSON.parse(localStorage.getItem(STORAGE_KEY) || 'null') || {
+  items: BASE_CFG.items.slice(),
+  cart: {}
+};
+const FIXED_OWNER_PASS = BASE_CFG.ownerPass;
+
+function saveState() {
+  localStorage.setItem(STORAGE_KEY, JSON.stringify(state));
+}
+
+function esc(s) {
+  return String(s || '').replace(/[&<>'"]/g, c => ({ '&':'&amp;','<':'&lt;','>':'&gt;',"'":'&#39;','"':'&quot;' }[c]));
+}
+
+function renderApp() {
+  document.getElementById('view-brand').textContent = BASE_CFG.negocio;
+  document.getElementById('view-title').textContent = BASE_CFG.negocio;
+  document.getElementById('view-sub').textContent = BASE_CFG.subtitulo;
+  document.getElementById('view-hero-img').innerHTML = BASE_CFG.heroImg ? '<img src="' + esc(BASE_CFG.heroImg) + '" alt="Banner">' : '';
+
+  const grid = document.getElementById('view-items');
+  grid.innerHTML = '';
+
+  state.items.forEach((it, idx) => {
+    const card = document.createElement('div');
+    card.className = 'card';
+    const precioTexto = it.price && it.price !== '0' ? '$' + esc(it.price) : '';
+
+    let accionHtml = '';
+    if (BASE_CFG.modelo === 'catalogo' || BASE_CFG.modelo === 'carta') {
+      accionHtml = '<button class="btn" onclick="sumarCarrito(' + idx + ')">+ Agregar</button>';
+    } else if (BASE_CFG.modelo === 'turnero') {
+      const msg = encodeURIComponent('Hola ' + BASE_CFG.negocio + ', quiero consultar turno/agenda para: ' + it.title);
+      const href = BASE_CFG.whatsapp ? ('https://wa.me/' + BASE_CFG.whatsapp + '?text=' + msg) : '#';
+      accionHtml = '<a class="btn btn-sec" target="_blank" href="' + href + '">Reservar / Consultar</a>';
+    } else {
+      const msg = encodeURIComponent('Hola ' + BASE_CFG.negocio + ', me interesa: ' + it.title);
+      const href = BASE_CFG.whatsapp ? ('https://wa.me/' + BASE_CFG.whatsapp + '?text=' + msg) : '#';
+      accionHtml = '<a class="btn" target="_blank" href="' + href + '">Contactar</a>';
+    }
+
+    card.innerHTML =
+      (it.img ? '<img src="' + esc(it.img) + '" alt="' + esc(it.title) + '">' : '') +
+      '<div style="font-weight:700; font-size:14px;">' + esc(it.title) + '</div>' +
+      (precioTexto ? '<div class="price">' + precioTexto + '</div>' : '') +
+      (it.desc ? '<div class="desc">' + esc(it.desc) + '</div>' : '') +
+      accionHtml;
+    grid.appendChild(card);
+  });
+
+  renderFooterBar();
+}
+
+function sumarCarrito(idx) {
+  const item = state.items[idx];
+  if (!item) return;
+  const key = item.id || String(idx);
+  state.cart[key] = (state.cart[key] || 0) + 1;
+  saveState();
+  renderFooterBar();
+}
+
+function enviarPedidoWhatsApp() {
+  const lineas = [];
+  let total = 0;
+  state.items.forEach((it, idx) => {
+    const key = it.id || String(idx);
+    const cant = state.cart[key] || 0;
+    if (cant > 0) {
+      const p = Number(String(it.price || '0').replace(/[^0-9.]/g, '')) || 0;
+      total += p * cant;
+      lineas.push('• ' + cant + 'x ' + it.title + (p ? ' ($' + (p * cant) + ')' : ''));
+    }
+  });
+  if (lineas.length === 0) {
+    alert('Agregá al menos un ítem primero.');
+    return;
+  }
+  const texto = 'Hola ' + BASE_CFG.negocio + ', quiero hacer este pedido:\n' + lineas.join('\n') + (total > 0 ? '\nTotal: $' + total : '');
+  const url = BASE_CFG.whatsapp ? ('https://wa.me/' + BASE_CFG.whatsapp + '?text=' + encodeURIComponent(texto)) : '';
+  if (url) window.open(url, '_blank');
+  else alert(texto);
+}
+
+function renderFooterBar() {
+  const bar = document.getElementById('view-footer-bar');
+  if (BASE_CFG.modelo === 'catalogo' || BASE_CFG.modelo === 'carta') {
+    let totalItems = 0;
+    let totalMonto = 0;
+    state.items.forEach((it, idx) => {
+      const key = it.id || String(idx);
+      const cant = state.cart[key] || 0;
+      const p = Number(String(it.price || '0').replace(/[^0-9.]/g, '')) || 0;
+      totalItems += cant;
+      totalMonto += p * cant;
+    });
+    bar.innerHTML =
+      '<div style="font-size:13px;">Ítems: <b>' + totalItems + '</b>' + (totalMonto > 0 ? ' · Total: <b style="color:#10b981;">$' + totalMonto + '</b>' : '') + '</div>' +
+      '<button class="btn" onclick="enviarPedidoWhatsApp()">Enviar por WhatsApp</button>';
+  } else {
+    const msg = encodeURIComponent('Hola ' + BASE_CFG.negocio + ', quisiera más información.');
+    const href = BASE_CFG.whatsapp ? ('https://wa.me/' + BASE_CFG.whatsapp + '?text=' + msg) : '#';
+    bar.innerHTML =
+      '<div style="font-size:12px; color:#9ca3af;">' + esc(BASE_CFG.negocio) + '</div>' +
+      '<a class="btn" target="_blank" href="' + href + '">WhatsApp Directo</a>';
+  }
+}
+
+function abrirPanelDueno() {
+  const clave = prompt('Ingresá la contraseña del dueño:');
+  if (clave === null) return;
+  if (String(clave) !== String(FIXED_OWNER_PASS)) {
+    alert('Contraseña incorrecta.');
+    return;
+  }
+  document.getElementById('owner-modal').style.display = 'block';
+  renderEditorDueno();
+}
+
+function cerrarPanelDueno() {
+  document.getElementById('owner-modal').style.display = 'none';
+}
+
+function renderEditorDueno() {
+  const wrap = document.getElementById('owner-items-editor');
+  wrap.innerHTML = '';
+  state.items.forEach((it, idx) => {
+    const div = document.createElement('div');
+    div.className = 'edit-row';
+    div.innerHTML =
+      '<div style="font-weight:700; margin-bottom:6px;">' + esc(it.title) + '</div>' +
+      '<input type="text" value="' + esc(it.price || '') + '" placeholder="Precio" onchange="actualizarPrecioDueno(' + idx + ', this.value)">' +
+      '<button class="btn" style="background:#ef4444; color:#fff; width:100%;" onclick="quitarItemDueno(' + idx + ')">Quitar ítem</button>';
+    wrap.appendChild(div);
+  });
+}
+
+function actualizarPrecioDueno(idx, nuevoPrecio) {
+  if (!state.items[idx]) return;
+  state.items[idx].price = String(nuevoPrecio).trim();
+  saveState();
+  renderApp();
+}
+
+function quitarItemDueno(idx) {
+  state.items.splice(idx, 1);
+  saveState();
+  renderEditorDueno();
+  renderApp();
+}
+
+function agregarItemDueno() {
+  const tEl = document.getElementById('new-item-title');
+  const pEl = document.getElementById('new-item-price');
+  const dEl = document.getElementById('new-item-desc');
+  const title = tEl ? tEl.value.trim() : '';
+  if (!title) {
+    alert('Ingresá un nombre para el ítem.');
+    return;
+  }
+  state.items.push({
+    id: 'owner_' + Date.now(),
+    title: title,
+    price: pEl ? pEl.value.trim() : '0',
+    desc: dEl ? dEl.value.trim() : '',
+    img: ''
+  });
+  if (tEl) tEl.value = '';
+  if (pEl) pEl.value = '';
+  if (dEl) dEl.value = '';
+  saveState();
+  renderEditorDueno();
+  renderApp();
+}
+
+renderApp();
+<\/script>
+</body>
+</html>`;
+        }
+
+        function generarPlantillaEnEditor(abrirVistaPrevia) {
+            sincizarFormularioPlantilla();
+            if (!tplEstado.negocio) {
+                tplEstado.negocio = 'Mi Proyecto Ágora';
+            }
+            guardarBorradorPlantilla(true);
+            const htmlGenerado = construirHtmlPlantillaVendible(tplEstado);
+            if (editor) {
+                editor.value = htmlGenerado;
+                localStorage.setItem('agora_codigo_app', editor.value);
+            }
+            if (abrirVistaPrevia) {
+                const blob = new Blob([htmlGenerado], { type: 'text/html;charset=utf-8' });
+                window.open(URL.createObjectURL(blob), '_blank');
+            } else {
+                alert('¡Plantilla cargada en el editor lista para guardar o subir!');
+            }
         }
 
         function escapeHTML(str) {
