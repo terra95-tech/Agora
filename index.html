@@ -855,7 +855,7 @@
         <button class="float-btn" onclick="togglePanel('ai-panel')" title="Asistente IA">✦</button>
     </div>
 <script>
-  // CONFIGURACIÓN ÚNICA DE GEMINI PARA EL ASISTENTE ÁGORA
+// CONFIGURACIÓN ÚNICA DE GEMINI PARA EL ASISTENTE ÁGORA
 const GEMINI_API_KEY = 'AQ.Ab8RN6KDrhj1qE72j34tbU7olgMmRSKx_R6BxnzgqyXg8gKAfQ';
 const GEMINI_MODEL = 'gemini-3.8-flash';
 const GEMINI_API_URL = `https://generativelanguage.googleapis.com/v1beta/models/${GEMINI_MODEL}:generateContent`;
@@ -868,50 +868,6 @@ function appendAgoraChatMessage(text, role = 'ai') {
     bubble.textContent = text;
     chatBox.appendChild(bubble);
     chatBox.scrollTop = chatBox.scrollHeight;
-}
-
-async function enviarMensajeIA() {
-    const input = document.getElementById('user-input');
-    if (!input) return;
-    const prompt = input.value.trim();
-    if (!prompt) return;
-
-    appendAgoraChatMessage(prompt, 'user');
-    input.value = '';
-
-    try {
-        const response = await fetch(`${GEMINI_API_URL}?key=${encodeURIComponent(GEMINI_API_KEY)}`, {
-            method: 'POST',
-            headers: {
-                'Content-Type': 'application/json'
-            },
-            body: JSON.stringify({
-                contents: [
-                    {
-                        parts: [{ text: prompt }]
-                    }
-                ]
-            })
-        });
-
-        if (!response.ok) {
-            const errorPayload = await response.json().catch(() => ({}));
-            const detail = errorPayload?.error?.message || `HTTP ${response.status}`;
-            appendAgoraChatMessage(`Error HTTP en ${GEMINI_MODEL}: ${detail}`, 'ai');
-            return;
-        }
-
-        const data = await response.json();
-        const reply =
-            data?.candidates?.[0]?.content?.parts
-                ?.map(part => part.text || '')
-                .join('')
-                .trim() || 'Respuesta vacía del modelo.';
-
-        appendAgoraChatMessage(reply, 'ai');
-    } catch (err) {
-        appendAgoraChatMessage(`Error de red al consultar Gemini: ${err.message}`, 'ai');
-    }
 }
 
 function vincularEventosAsistenteAgora() {
@@ -1023,55 +979,6 @@ function copiarRutaArchivo(index) {
     }
 }
 
-// GESTOR DE ARCHIVOS Y GALERÍA (LIBRE)
-let imagenParaConvertirData = null;
-function procesarArchivoSubido(event) {
-    const file = event.target.files[0];
-    if (!file) return;
-
-    const reader = new FileReader();
-    reader.onload = function(e) {
-        const base64Data = e.target.result;
-        let archivos = JSON.parse(localStorage.getItem('agora_media_files') || '[]');
-        archivos.push({ name: file.name, data: base64Data });
-        localStorage.setItem('agora_media_files', JSON.stringify(archivos));
-        cargarGaleriaLocal();
-        alert('¡Imagen subida al gestor con éxito!');
-    };
-    reader.readAsDataURL(file);
-}
-
-function cargarGaleriaLocal() {
-    const container = document.getElementById('gallery-container');
-    if (!container) return;
-    let archivos = JSON.parse(localStorage.getItem('agora_media_files') || '[]');
-
-    if (archivos.length === 0) {
-        container.innerHTML = `<div style="font-size: 11px; color: var(--text-muted); grid-column: span 2;">No hay archivos cargados.</div>`;
-        return;
-    }
-
-    container.innerHTML = '';
-    archivos.forEach((file, index) => {
-        const item = document.createElement('div');
-        item.className = 'gallery-item';
-        item.innerHTML = `
-            <img src="${file.data}" alt="${file.name}">
-            <button onclick="copiarRutaArchivo(${index})">📋 Copiar Link</button>
-            <button onclick="eliminarArchivo(${index})" style="background:#ef4444; color:#fff; margin-top:2px;">🗑️ Borrar</button>
-        `;
-        container.appendChild(item);
-    });
-}
-
-function copiarRutaArchivo(index) {
-    let archivos = JSON.parse(localStorage.getItem('agora_media_files') || '[]');
-    if (archivos[index]) {
-        navigator.clipboard.writeText(archivos[index].data).then(() => {
-            alert('¡Enlace copiado al portapapeles!');
-        });
-    }
-}
         function eliminarArchivo(index) {
             let archivos = JSON.parse(localStorage.getItem('agora_media_files') || '[]');
             archivos.splice(index, 1);
@@ -1381,7 +1288,7 @@ function copiarRutaArchivo(index) {
             const loadingId = 'loading-' + Date.now();
             chatBox.innerHTML += `<div class="msg ai" id="${loadingId}">Procesando con Gemini (gemini-3.8-flash)...</div>`;
 
-            if (!GEMINI_API_KEY || GEMINI_API_KEY === "AQ.Ab8RN6KDrhj1qE72j34tbU7olgMmRSKx_R6BxnzgqyXg8gKAfQ") {
+            if (!GEMINI_API_KEY) {
                 const el = document.getElementById(loadingId);
                 if (el) el.remove();
                 chatBox.innerHTML += `<div class="msg ai" style="color:#f87171;">Configurá tu constante GEMINI_API_KEY en el código antes de enviar consultas.</div>`;
@@ -1471,7 +1378,7 @@ function copiarRutaArchivo(index) {
                 // Intenta respaldo con Gemini si está configurada la clave
             }
 
-            if (GEMINI_API_KEY && GEMINI_API_KEY !== "AQ.Ab8RN6KDrhj1qE72j34tbU7olgMmRSKx_R6BxnzgqyXg8gKAfQ") {
+            if (GEMINI_API_KEY) {
                 try {
                     const endpoint = `https://generativelanguage.googleapis.com/v1beta/models/gemini-3.8-flash:generateContent?key=${encodeURIComponent(GEMINI_API_KEY)}`;
                     const prompt = `Translate the following Spanish text accurately to language code "${targetLang}". Return ONLY the translated text with no extra notes or quotes:\n\n${textoEs}`;
