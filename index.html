@@ -1251,7 +1251,7 @@
             alert('¡Enlace de Firebase activado!');
         }
 
-        // 1. ASISTENTE CON NUEVA API KEY (GEMINI 2.5 FLASH + MANEJO IF (!RES.OK))
+        // 1. ASISTENTE CON NUEVA API KEY (GEMINI 3.8 FLASH + MANEJO IF (!RES.OK))
         function handleKeyPress(e) {
             if (e.key === 'Enter') enviarMensajeIA();
         }
@@ -1269,7 +1269,7 @@
             const loadingId = 'loading-' + Date.now();
             chatBox.innerHTML += `<div class="msg ai" id="${loadingId}">Procesando con Gemini (gemini-3.8-flash)...</div>`;
 
-            if (!GEMINI_API_KEY || GEMINI_API_KEY === "PEGA_AQUI_TU_API_KEY_AGORA") {
+            if (!GEMINI_API_KEY || GEMINI_API_KEY === "AQ.Ab8RN6KDrhj1qE72j34tbU7olgMmRSKx_R6BxnzgqyXg8gKAfQ") {
                 const el = document.getElementById(loadingId);
                 if (el) el.remove();
                 chatBox.innerHTML += `<div class="msg ai" style="color:#f87171;">Configurá tu constante GEMINI_API_KEY en el código antes de enviar consultas.</div>`;
@@ -1278,7 +1278,7 @@
             }
 
             try {
-                const endpoint = `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent?key=${encodeURIComponent(GEMINI_API_KEY)}`;
+                const endpoint = `https://generativelanguage.googleapis.com/v1beta/models/gemini-3.8-flash:generateContent?key=${encodeURIComponent(GEMINI_API_KEY)}`;
 
                 const response = await fetch(endpoint, {
                     method: 'POST',
@@ -1359,9 +1359,9 @@
                 // Intenta respaldo con Gemini si está configurada la clave
             }
 
-            if (GEMINI_API_KEY && GEMINI_API_KEY !== "PEGA_AQUI_TU_API_KEY_AGORA") {
+            if (GEMINI_API_KEY && GEMINI_API_KEY !== "AQ.Ab8RN6KDrhj1qE72j34tbU7olgMmRSKx_R6BxnzgqyXg8gKAfQ") {
                 try {
-                    const endpoint = `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent?key=${encodeURIComponent(GEMINI_API_KEY)}`;
+                    const endpoint = `https://generativelanguage.googleapis.com/v1beta/models/gemini-3.8-flash:generateContent?key=${encodeURIComponent(GEMINI_API_KEY)}`;
                     const prompt = `Translate the following Spanish text accurately to language code "${targetLang}". Return ONLY the translated text with no extra notes or quotes:\n\n${textoEs}`;
                     const res = await fetch(endpoint, {
                         method: 'POST',
