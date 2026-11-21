@@ -627,6 +627,7 @@
                 <div class="toolbar-group">
                     <button onclick="guardarLocal()">💾 Guardar</button>
                     <button onclick="probarLocal()" style="background:#2563eb; color:#fff;">▶️ Probar</button>
+                    <button id="btn-probar-tiempo-real" type="button" onclick="probarTiempoReal()" style="background:#0ea5e9; color:#fff;">⚡ Tiempo Real</button>
                 </div>
                 <div class="toolbar-group">
                     <button onclick="subirAGitHub()" style="background:#059669; color:#fff;">🚀 Subir a GitHub</button>
@@ -675,13 +676,22 @@
             </div>
         </div>
 
-        <!-- PANEL LATERAL: GESTOR DE ARCHIVOS Y REDUCTOR DE ÍCONOS -->
+        <!-- PANEL LATERAL: GESTOR DE ARCHIVOS, CARPETAS CELULAR Y CONVERSOR -->
         <div id="media-panel" class="side-panel">
             <div class="panel-header">
                 <span>📁 Gestor de Archivos & Conversor</span>
                 <button class="panel-close" onclick="togglePanel('media-panel')">×</button>
             </div>
             <div class="panel-body">
+                <div class="panel-section">
+                    <h3>📂 Carpetas en el Celular</h3>
+                    <div style="display:flex; gap:6px; flex-wrap:wrap; margin-bottom:8px;">
+                        <button type="button" onclick="crearCarpetaCelular()" style="background:#2563eb; color:#fff; border:none; border-radius:5px; padding:6px 10px; font-size:11px; font-weight:600; cursor:pointer;">+ Carpeta</button>
+                        <button type="button" onclick="guardarEnCarpetaCelular()" style="background:#059669; color:#fff; border:none; border-radius:5px; padding:6px 10px; font-size:11px; font-weight:600; cursor:pointer;">💾 Guardar Aquí</button>
+                    </div>
+                    <div id="mobile-folders-box"></div>
+                </div>
+
                 <div class="panel-section">
                     <h3>Subir Imagen / Recurso Libre</h3>
                     <p style="font-size: 11px; color: var(--text-muted); margin-bottom: 8px;">Cualquier formato o proporción (logos, fotos, banners).</p>
@@ -715,7 +725,6 @@
                 </div>
             </div>
         </div>
-
         <!-- PANEL LATERAL: SAAS DASHBOARD DE CLIENTES Y LICENCIAS -->
         <div id="saas-panel" class="side-panel">
             <div class="panel-header">
@@ -817,7 +826,7 @@
             </div>
         </div>
 
-       <div id="ai-panel" class="side-panel">
+        <div id="ai-panel" class="side-panel">
             <div class="panel-header">
                 <span>Asistente Ágora</span>
                 <button class="panel-close" onclick="togglePanel('ai-panel')">×</button>
@@ -842,7 +851,7 @@
             <div class="ai-input-area">
                 <button type="button" id="voice-btn" class="voice-btn" onclick="toggleDictadoVoz()" title="Dictar en es-AR y traducir">🎤</button>
                 <input type="text" id="user-input" placeholder="Consultar al asistente..." onkeypress="handleKeyPress(event)">
-                <button onclick="enviarMensajeIA()">Enviar</button>
+                <button type="button" id="ai-send-btn" onclick="enviarMensajeIA()">Enviar</button>
             </div>
         </div>
     </main>
@@ -854,186 +863,74 @@
         <button class="float-btn" onclick="togglePanel('templates-panel')" title="Plantillas Profesionales" style="background:#7c3aed; color:#fff;">🧩</button>
         <button class="float-btn" onclick="togglePanel('ai-panel')" title="Asistente IA">✦</button>
     </div>
+
 <script>
 // CONFIGURACIÓN ÚNICA DE GEMINI PARA EL ASISTENTE ÁGORA
-const GEMINI_API_KEY = 'AQ.Ab8RN6KDrhj1qE72j34tbU7olgMmRSKx_R6BxnzgqyXg8gKAfQ';
+const GEMINI_API_KEY = '';
 const GEMINI_MODEL = 'gemini-3.8-flash';
 const GEMINI_API_URL = `https://generativelanguage.googleapis.com/v1beta/models/${GEMINI_MODEL}:generateContent`;
 
-function escapeHTMLSafe(str) {
-    if (typeof escapeHTML === 'function') {
-        return escapeHTML(str);
+function obtenerClaveGeminiActiva() {
+    if (GEMINI_API_KEY && GEMINI_API_KEY.trim()) return GEMINI_API_KEY.trim();
+    let sesionKey = (sessionStorage.getItem('agora_gemini_session_key') || '').trim();
+    if (!sesionKey) {
+        const ingresada = prompt('Ingresá tu API Key de Gemini para esta sesión:');
+        if (ingresada && ingresada.trim()) {
+            sesionKey = ingresada.trim();
+            sessionStorage.setItem('agora_gemini_session_key', sesionKey);
+        }
     }
-    return String(str)
-        .replace(/&/g, '&amp;')
-        .replace(/</g, '&lt;')
-        .replace(/>/g, '&gt;')
-        .replace(/"/g, '&quot;')
-        .replace(/'/g, '&#39;');
+    return sesionKey;
 }
 
-function appendAgoraChatMessage(text, role = 'ai') {
-    const chatBox = document.getElementById('chat-messages');
-    if (!chatBox) return;
-    const bubble = document.createElement('div');
-    bubble.className = `msg ${role}`;
-    bubble.textContent = text;
-    chatBox.appendChild(bubble);
-    chatBox.scrollTop = chatBox.scrollHeight;
+function resolverFirestoreDb() {
+    if (typeof db !== 'undefined' && db && typeof db.collection === 'function') {
+        return db;
+    }
+    if (window.db && typeof window.db.collection === 'function') {
+        return window.db;
+    }
+    if (window.firebase && typeof window.firebase.firestore === 'function' && window.firebase.apps && window.firebase.apps.length) {
+        try {
+            window.db = window.firebase.firestore();
+            return window.db;
+        } catch (_) {}
+    }
+    return null;
 }
 
-function vincularEventosAsistenteAgora() {
-    const input = document.getElementById('user-input');
-    const aiPanel = document.getElementById('ai-panel');
+function syncColeccionFirestore(coleccionNombre, docId, payloadObj, merge = true) {
+    const firestore = resolverFirestoreDb();
+    if (!firestore) return;
+    try {
+        firestore.collection(coleccionNombre).doc(docId).set(Object.assign({}, payloadObj, {
+            updatedAt: new Date().toISOString()
+        }), { merge: merge });
+    } catch (_) {}
+}
 
-    if (input && !input.dataset.agoraBound) {
-        input.dataset.agoraBound = 'true';
-        input.addEventListener('keydown', (e) => {
-            if (e.key === 'Enter' && !e.shiftKey) {
-                e.preventDefault();
-                e.stopImmediatePropagation();
-                enviarMensajeIA();
+function escucharDocFirestore(coleccionNombre, docId, onDataCallback) {
+    const firestore = resolverFirestoreDb();
+    if (!firestore || typeof onDataCallback !== 'function') return;
+    try {
+        firestore.collection(coleccionNombre).doc(docId).onSnapshot((doc) => {
+            if (doc && doc.exists) {
+                onDataCallback(doc.data() || {});
             }
         });
-    }
-
-    if (aiPanel) {
-        const form = aiPanel.querySelector('form');
-        if (form && !form.dataset.agoraBound) {
-            form.dataset.agoraBound = 'true';
-            form.addEventListener('submit', (e) => {
-                e.preventDefault();
-                e.stopImmediatePropagation();
-                enviarMensajeIA();
-            });
-        }
-
-        const sendBtn = Array.from(aiPanel.querySelectorAll('button')).find(
-            btn => btn.textContent.trim().toLowerCase() === 'enviar'
-        );
-        if (sendBtn && !sendBtn.dataset.agoraBound) {
-            sendBtn.dataset.agoraBound = 'true';
-            sendBtn.removeAttribute('onclick');
-            sendBtn.addEventListener('click', (e) => {
-                e.preventDefault();
-                e.stopImmediatePropagation();
-                enviarMensajeIA();
-            });
-        }
-    }
+    } catch (_) {}
 }
 
-async function enviarMensajeIA() {
-    const input = document.getElementById('user-input');
-    if (!input) return;
-    const texto = input.value.trim();
-    if (!texto) return;
-
-    const chatBox = document.getElementById('chat-messages');
-    if (!chatBox) return;
-
-    chatBox.innerHTML += `<div class="msg user">${escapeHTMLSafe(texto)}</div>`;
-    input.value = '';
-    chatBox.scrollTop = chatBox.scrollHeight;
-
-    const loadingId = 'loading-' + Date.now();
-    chatBox.innerHTML += `<div class="msg ai" id="${loadingId}">Procesando con Gemini (${escapeHTMLSafe(GEMINI_MODEL)})...</div>`;
-    chatBox.scrollTop = chatBox.scrollHeight;
-
-    if (!GEMINI_API_KEY) {
-        const el = document.getElementById(loadingId);
-        if (el) el.remove();
-        chatBox.innerHTML += `<div class="msg ai" style="color:#f87171;">Configurá tu constante GEMINI_API_KEY en el código antes de enviar consultas.</div>`;
-        chatBox.scrollTop = chatBox.scrollHeight;
-        return;
-    }
-
-    const endpoint = `https://generativelanguage.googleapis.com/v1beta/models/${encodeURIComponent(GEMINI_MODEL)}:generateContent?key=${encodeURIComponent(GEMINI_API_KEY)}`;
-    const maxReintentos = 3;
-
-    try {
-        let response = null;
-        let rawText = '';
-        let data = {};
-
-        for (let intento = 1; intento <= maxReintentos; intento++) {
-            const loadingEl = document.getElementById(loadingId);
-            if (loadingEl) {
-                loadingEl.textContent = intento === 1
-                    ? `Procesando con Gemini (${GEMINI_MODEL})...`
-                    : `Servidor saturado (503). Reintentando (${intento}/${maxReintentos})...`;
-            }
-
-            response = await fetch(endpoint, {
-                method: 'POST',
-                headers: {
-                    'Content-Type': 'application/json'
-                },
-                body: JSON.stringify({
-                    contents: [{
-                        parts: [{ text: texto }]
-                    }]
-                })
-            });
-
-            rawText = await response.text();
-            try {
-                data = rawText ? JSON.parse(rawText) : {};
-            } catch (_) {
-                data = { error: { message: rawText || 'Respuesta no JSON' } };
-            }
-
-            if (response.status !== 503 || intento === maxReintentos) {
-                break;
-            }
-
-            await new Promise(resolve => setTimeout(resolve, 1500 * intento));
-        }
-
-        const loadingEl = document.getElementById(loadingId);
-        if (loadingEl) loadingEl.remove();
-
-        if (!response.ok) {
-            let detalleError = (data && data.error && data.error.message)
-                ? data.error.message
-                : (rawText || 'Error de respuesta de la API');
-
-            if (response.status === 503) {
-                detalleError = 'Los servidores de Gemini están con mucha demanda en este momento. Probá nuevamente en unos segundos.';
-            } else if (response.status === 429) {
-                detalleError = 'Se alcanzó el límite temporal de consultas. Esperá un momento y volvé a intentar.';
-            } else if (response.status === 400 || response.status === 403) {
-                detalleError = `Revisá la API Key o el modelo configurado (${detalleError}).`;
-            }
-
-            chatBox.innerHTML += `<div class="msg ai" style="color:#f87171;">Error HTTP ${response.status}: ${escapeHTMLSafe(detalleError)}</div>`;
-            chatBox.scrollTop = chatBox.scrollHeight;
-            return;
-        }
-
-        const respuestaIA = data &&
-            data.candidates &&
-            data.candidates[0] &&
-            data.candidates[0].content &&
-            data.candidates[0].content.parts &&
-            data.candidates[0].content.parts[0] &&
-            data.candidates[0].content.parts[0].text;
-
-        if (respuestaIA) {
-            chatBox.innerHTML += `<div class="msg ai">${escapeHTMLSafe(respuestaIA)}</div>`;
-        } else {
-            chatBox.innerHTML += `<div class="msg ai" style="color:#f87171;">La API respondió sin texto utilizable.</div>`;
-        }
-    } catch (error) {
-        const loadingEl = document.getElementById(loadingId);
-        if (loadingEl) loadingEl.remove();
-        chatBox.innerHTML += `<div class="msg ai" style="color:#f87171;">Error de conexión o red al consultar Gemini: ${escapeHTMLSafe(error && error.message ? error.message : String(error))}</div>`;
-    }
-    chatBox.scrollTop = chatBox.scrollHeight;
+function escapeHTML(str) {
+    return String(str || '').replace(/[&<>'"]/g, tag => ({
+        '&': '&amp;', '<': '&lt;', '>': '&gt;', "'": '&#39;', '"': '&quot;'
+    }[tag] || tag));
 }
 
-document.addEventListener('DOMContentLoaded', vincularEventosAsistenteAgora);
-window.addEventListener('load', vincularEventosAsistenteAgora);
+function escapeHTMLSafe(str) {
+    return escapeHTML(str);
+}
+
 // GESTIÓN DE PANELES LATERALES
 function togglePanel(panelId) {
     ['media-panel', 'saas-panel', 'templates-panel', 'ai-panel'].forEach(id => {
@@ -1044,185 +941,100 @@ function togglePanel(panelId) {
         } else {
             p.classList.remove('open');
         }
-    });// CONFIGURACIÓN ÚNICA DE GEMINI PARA EL ASISTENTE ÁGORA
-const GEMINI_API_KEY = 'AQ.Ab8RN6KDrhj1qE72j34tbU7olgMmRSKx_R6BxnzgqyXg8gKAfQ';
-const GEMINI_MODEL = 'gemini-3.8-flash';
-const GEMINI_API_URL = `https://generativelanguage.googleapis.com/v1beta/models/${GEMINI_MODEL}:generateContent`;
-
-function escapeHTMLSafe(str) {
-    if (typeof escapeHTML === 'function') {
-        return escapeHTML(str);
-    }
-    return String(str)
-        .replace(/&/g, '&amp;')
-        .replace(/</g, '&lt;')
-        .replace(/>/g, '&gt;')
-        .replace(/"/g, '&quot;')
-        .replace(/'/g, '&#39;');
+    });
+}
+// CARPETAS EN EL CELULAR (ALMACENAMIENTO LOCAL + FIRESTORE)
+function getCarpetasCelular() {
+    try { return JSON.parse(localStorage.getItem('agora_carpetas_celular') || '{}'); }
+    catch (_) { return {}; }
 }
 
-function appendAgoraChatMessage(text, role = 'ai') {
-    const chatBox = document.getElementById('chat-messages');
-    if (!chatBox) return;
-    const bubble = document.createElement('div');
-    bubble.className = `msg ${role}`;
-    bubble.textContent = text;
-    chatBox.appendChild(bubble);
-    chatBox.scrollTop = chatBox.scrollHeight;
+function setCarpetasCelular(carpetas) {
+    localStorage.setItem('agora_carpetas_celular', JSON.stringify(carpetas));
+    syncColeccionFirestore('agora_secciones', 'carpetas_celular', { carpetas: carpetas });
+    renderCarpetasCelular();
 }
 
-function vincularEventosAsistenteAgora() {
-    const input = document.getElementById('user-input');
-    const aiPanel = document.getElementById('ai-panel');
-
-    if (input && !input.dataset.agoraBound) {
-        input.dataset.agoraBound = 'true';
-        input.addEventListener('keydown', (e) => {
-            if (e.key === 'Enter' && !e.shiftKey) {
-                e.preventDefault();
-                e.stopImmediatePropagation();
-                enviarMensajeIA();
-            }
-        });
-    }
-
-    if (aiPanel) {
-        const form = aiPanel.querySelector('form');
-        if (form && !form.dataset.agoraBound) {
-            form.dataset.agoraBound = 'true';
-            form.addEventListener('submit', (e) => {
-                e.preventDefault();
-                e.stopImmediatePropagation();
-                enviarMensajeIA();
-            });
-        }
-
-        const sendBtn = Array.from(aiPanel.querySelectorAll('button')).find(
-            btn => btn.textContent.trim().toLowerCase() === 'enviar'
-        );
-        if (sendBtn && !sendBtn.dataset.agoraBound) {
-            sendBtn.dataset.agoraBound = 'true';
-            sendBtn.removeAttribute('onclick');
-            sendBtn.addEventListener('click', (e) => {
-                e.preventDefault();
-                e.stopImmediatePropagation();
-                enviarMensajeIA();
-            });
-        }
-    }
+function crearCarpetaCelular() {
+    const nombreCarpeta = prompt('Nombre de la carpeta en el celular (ej: Clientes, Catalogos):');
+    if (!nombreCarpeta || !nombreCarpeta.trim()) return;
+    const clave = nombreCarpeta.trim();
+    const carpetas = getCarpetasCelular();
+    if (!carpetas[clave]) carpetas[clave] = {};
+    setCarpetasCelular(carpetas);
 }
 
-async function enviarMensajeIA() {
-    const input = document.getElementById('user-input');
-    if (!input) return;
-    const texto = input.value.trim();
-    if (!texto) return;
+function guardarEnCarpetaCelular(carpetaNombre) {
+    if (!editor) return;
+    const carpetas = getCarpetasCelular();
+    const carpeta = carpetaNombre || prompt('¿En qué carpeta querés guardar?');
+    if (!carpeta || !carpeta.trim()) return;
+    const claveCarpeta = carpeta.trim();
+    const nombreArchivo = prompt('Nombre del archivo/proyecto (ej: index.html):', 'index.html');
+    if (!nombreArchivo || !nombreArchivo.trim()) return;
+    if (!carpetas[claveCarpeta]) carpetas[claveCarpeta] = {};
+    carpetas[claveCarpeta][nombreArchivo.trim()] = editor.value;
+    setCarpetasCelular(carpetas);
+    alert(`Guardado en "${claveCarpeta}/${nombreArchivo.trim()}".`);
+}
 
-    const chatBox = document.getElementById('chat-messages');
-    if (!chatBox) return;
+function abrirArchivoCarpetaCelular(carpeta, archivo) {
+    if (!editor) return;
+    const carpetas = getCarpetasCelular();
+    const contenido = carpetas?.[carpeta]?.[archivo];
+    if (typeof contenido !== 'string') return;
+    editor.value = contenido;
+    localStorage.setItem('agora_codigo_app', editor.value);
+    syncColeccionFirestore('agora_secciones', 'editor_codigo', { codigo: editor.value });
+    alert(`Cargado "${carpeta}/${archivo}" en el editor.`);
+}
 
-    chatBox.innerHTML += `<div class="msg user">${escapeHTMLSafe(texto)}</div>`;
-    input.value = '';
-    chatBox.scrollTop = chatBox.scrollHeight;
+function borrarArchivoCarpetaCelular(carpeta, archivo) {
+    const carpetas = getCarpetasCelular();
+    if (!carpetas?.[carpeta]?.[archivo]) return;
+    if (!confirm(`¿Borrar "${archivo}" de "${carpeta}"?`)) return;
+    delete carpetas[carpeta][archivo];
+    setCarpetasCelular(carpetas);
+}
 
-    const loadingId = 'loading-' + Date.now();
-    chatBox.innerHTML += `<div class="msg ai" id="${loadingId}">Procesando con Gemini (${escapeHTMLSafe(GEMINI_MODEL)})...</div>`;
-    chatBox.scrollTop = chatBox.scrollHeight;
+function renderCarpetasCelular() {
+    const box = document.getElementById('mobile-folders-box');
+    if (!box) return;
+    const carpetas = getCarpetasCelular();
+    const nombresCarpetas = Object.keys(carpetas);
 
-    if (!GEMINI_API_KEY) {
-        const el = document.getElementById(loadingId);
-        if (el) el.remove();
-        chatBox.innerHTML += `<div class="msg ai" style="color:#f87171;">Configurá tu constante GEMINI_API_KEY en el código antes de enviar consultas.</div>`;
-        chatBox.scrollTop = chatBox.scrollHeight;
+    if (!nombresCarpetas.length) {
+        box.innerHTML = `<div style="font-size:11px; color:var(--text-muted);">Sin carpetas creadas todavía.</div>`;
         return;
     }
 
-    const endpoint = `https://generativelanguage.googleapis.com/v1beta/models/${encodeURIComponent(GEMINI_MODEL)}:generateContent?key=${encodeURIComponent(GEMINI_API_KEY)}`;
-    const maxReintentos = 3;
+    box.innerHTML = '';
+    nombresCarpetas.forEach(carpeta => {
+        const archivos = Object.keys(carpetas[carpeta] || {});
+        const wrap = document.createElement('div');
+        wrap.style.cssText = 'background:#252525; border:1px solid var(--border-color); border-radius:6px; padding:8px; margin-bottom:8px;';
 
-    try {
-        let response = null;
-        let rawText = '';
-        let data = {};
+        let itemsHtml = archivos.length
+            ? archivos.map(arq => `
+                <div style="display:flex; justify-content:space-between; align-items:center; gap:6px; margin-top:5px; font-size:11px;">
+                    <span style="word-break:break-all;">📄 ${escapeHTML(arq)}</span>
+                    <div style="display:flex; gap:4px;">
+                        <button type="button" onclick="abrirArchivoCarpetaCelular('${escapeHTML(carpeta)}', '${escapeHTML(arq)}')" style="background:#10b981; color:#111; border:none; border-radius:4px; padding:3px 7px; font-size:10px; font-weight:700; cursor:pointer;">Abrir</button>
+                        <button type="button" onclick="borrarArchivoCarpetaCelular('${escapeHTML(carpeta)}', '${escapeHTML(arq)}')" style="background:#dc2626; color:#fff; border:none; border-radius:4px; padding:3px 7px; font-size:10px; font-weight:700; cursor:pointer;">✕</button>
+                    </div>
+                </div>
+            `).join('')
+            : `<div style="font-size:10px; color:var(--text-muted); margin-top:4px;">Carpeta vacía</div>`;
 
-        for (let intento = 1; intento <= maxReintentos; intento++) {
-            const loadingEl = document.getElementById(loadingId);
-            if (loadingEl) {
-                loadingEl.textContent = intento === 1
-                    ? `Procesando con Gemini (${GEMINI_MODEL})...`
-                    : `Servidor saturado (503). Reintentando (${intento}/${maxReintentos})...`;
-            }
-
-            response = await fetch(endpoint, {
-                method: 'POST',
-                headers: {
-                    'Content-Type': 'application/json'
-                },
-                body: JSON.stringify({
-                    contents: [{
-                        parts: [{ text: texto }]
-                    }]
-                })
-            });
-
-            rawText = await response.text();
-            try {
-                data = rawText ? JSON.parse(rawText) : {};
-            } catch (_) {
-                data = { error: { message: rawText || 'Respuesta no JSON' } };
-            }
-
-            if (response.status !== 503 || intento === maxReintentos) {
-                break;
-            }
-
-            await new Promise(resolve => setTimeout(resolve, 1500 * intento));
-        }
-
-        const loadingEl = document.getElementById(loadingId);
-        if (loadingEl) loadingEl.remove();
-
-        if (!response.ok) {
-            let detalleError = (data && data.error && data.error.message)
-                ? data.error.message
-                : (rawText || 'Error de respuesta de la API');
-
-            if (response.status === 503) {
-                detalleError = 'Los servidores de Gemini están con mucha demanda en este momento. Probá nuevamente en unos segundos.';
-            } else if (response.status === 429) {
-                detalleError = 'Se alcanzó el límite temporal de consultas. Esperá un momento y volvé a intentar.';
-            } else if (response.status === 400 || response.status === 403) {
-                detalleError = `Revisá la API Key o el modelo configurado (${detalleError}).`;
-            }
-
-            chatBox.innerHTML += `<div class="msg ai" style="color:#f87171;">Error HTTP ${response.status}: ${escapeHTMLSafe(detalleError)}</div>`;
-            chatBox.scrollTop = chatBox.scrollHeight;
-            return;
-        }
-
-        const respuestaIA = data &&
-            data.candidates &&
-            data.candidates[0] &&
-            data.candidates[0].content &&
-            data.candidates[0].content.parts &&
-            data.candidates[0].content.parts[0] &&
-            data.candidates[0].content.parts[0].text;
-
-        if (respuestaIA) {
-            chatBox.innerHTML += `<div class="msg ai">${escapeHTMLSafe(respuestaIA)}</div>`;
-        } else {
-            chatBox.innerHTML += `<div class="msg ai" style="color:#f87171;">La API respondió sin texto utilizable.</div>`;
-        }
-    } catch (error) {
-        const loadingEl = document.getElementById(loadingId);
-        if (loadingEl) loadingEl.remove();
-        chatBox.innerHTML += `<div class="msg ai" style="color:#f87171;">Error de conexión o red al consultar Gemini: ${escapeHTMLSafe(error && error.message ? error.message : String(error))}</div>`;
-    }
-    chatBox.scrollTop = chatBox.scrollHeight;
-}
-
-document.addEventListener('DOMContentLoaded', vincularEventosAsistenteAgora);
-window.addEventListener('load', vincularEventosAsistenteAgora);
+        wrap.innerHTML = `
+            <div style="display:flex; justify-content:space-between; align-items:center; gap:6px;">
+                <b style="font-size:12px; color:#6ee7b7;">📁 ${escapeHTML(carpeta)}</b>
+                <button type="button" onclick="guardarEnCarpetaCelular('${escapeHTML(carpeta)}')" style="background:#374151; color:#fff; border:none; border-radius:4px; padding:3px 7px; font-size:10px; cursor:pointer;">+ Guardar</button>
+            </div>
+            ${itemsHtml}
+        `;
+        box.appendChild(wrap);
+    });
 }
 
 // GESTOR DE ARCHIVOS Y GALERÍA (LIBRE)
@@ -1239,6 +1051,7 @@ function procesarArchivoSubido(event) {
         let archivos = JSON.parse(localStorage.getItem('agora_media_files') || '[]');
         archivos.push({ name: file.name, data: base64Data });
         localStorage.setItem('agora_media_files', JSON.stringify(archivos));
+        syncColeccionFirestore('agora_secciones', 'media_files', { items: archivos });
         cargarGaleriaLocal();
         alert('¡Imagen subida al gestor con éxito!');
     };
@@ -1277,683 +1090,676 @@ function copiarRutaArchivo(index) {
     }
 }
 
-        function eliminarArchivo(index) {
-            let archivos = JSON.parse(localStorage.getItem('agora_media_files') || '[]');
-            archivos.splice(index, 1);
-            localStorage.setItem('agora_media_files', JSON.stringify(archivos));
-            cargarGaleriaLocal();
+function eliminarArchivo(index) {
+    let archivos = JSON.parse(localStorage.getItem('agora_media_files') || '[]');
+    archivos.splice(index, 1);
+    localStorage.setItem('agora_media_files', JSON.stringify(archivos));
+    syncColeccionFirestore('agora_secciones', 'media_files', { items: archivos });
+    cargarGaleriaLocal();
+}
+
+// CONVERSOR DE ÍCONOS
+function cargarImagenParaConvertir(event) {
+    const file = event.target.files[0];
+    if (!file) return;
+    nombreImagenOriginal = file.name.substring(0, file.name.lastIndexOf('.')) || 'icono';
+
+    const reader = new FileReader();
+    reader.onload = function(e) {
+        imagenParaConvertirData = e.target.result;
+        document.getElementById('preview-source-img').src = imagenParaConvertirData;
+        document.getElementById('preview-source-name').textContent = file.name;
+        document.getElementById('converter-ui').style.display = 'block';
+    };
+    reader.readAsDataURL(file);
+}
+
+function descargarIcono(size) {
+    if (!imagenParaConvertirData) return;
+
+    const img = new Image();
+    img.onload = function() {
+        const canvas = document.createElement('canvas');
+        canvas.width = size;
+        canvas.height = size;
+        const ctx = canvas.getContext('2d');
+        ctx.drawImage(img, 0, 0, size, size);
+
+        const dataURL = canvas.toDataURL('image/png');
+        const link = document.createElement('a');
+        link.download = `${nombreImagenOriginal}_${size}x${size}.png`;
+        link.href = dataURL;
+        link.click();
+        alert(`¡Ícono de ${size}x${size} descargado con éxito!`);
+    };
+    img.src = imagenParaConvertirData;
+}
+
+// PANEL SAAS / CUADRO DE PROYECTOS (PAUSAR / BLOQUEAR / QUITAR)
+function agregarNuevoProyectoSaas() {
+    let nombre = prompt("Nombre del proyecto o cliente:");
+    if (!nombre) return;
+    let linkProyecto = prompt("URL del proyecto (ej: https://usuario.github.io/repo/):", localStorage.getItem('agora_ultimo_link') || '');
+    let proyectos = JSON.parse(localStorage.getItem('agora_saas_proyectos') || '[]');
+    let vencimiento = new Date();
+    vencimiento.setDate(vencimiento.getDate() + 30);
+
+    proyectos.push({
+        nombre: nombre,
+        link: linkProyecto || '#',
+        estado: 'activo',
+        vencimiento: vencimiento.toISOString()
+    });
+    localStorage.setItem('agora_saas_proyectos', JSON.stringify(proyectos));
+    syncColeccionFirestore('agora_secciones', 'saas_proyectos', { items: proyectos });
+    renderSaasClients();
+    alert('¡Proyecto registrado con éxito!');
+}
+
+function cambiarEstadoProyecto(index, nuevoEstado) {
+    let proyectos = JSON.parse(localStorage.getItem('agora_saas_proyectos') || '[]');
+    if (!proyectos[index]) return;
+    proyectos[index].estado = nuevoEstado;
+    localStorage.setItem('agora_saas_proyectos', JSON.stringify(proyectos));
+    syncColeccionFirestore('agora_secciones', 'saas_proyectos', { items: proyectos });
+    renderSaasClients();
+}
+
+function quitarProyecto(index) {
+    let proyectos = JSON.parse(localStorage.getItem('agora_saas_proyectos') || '[]');
+    if (!proyectos[index]) return;
+    if (!confirm(`¿Quitar "${proyectos[index].nombre}" del cuadro?`)) return;
+    proyectos.splice(index, 1);
+    localStorage.setItem('agora_saas_proyectos', JSON.stringify(proyectos));
+    syncColeccionFirestore('agora_secciones', 'saas_proyectos', { items: proyectos });
+    renderSaasClients();
+}
+
+function renderSaasClients() {
+    const container = document.getElementById('saas-clients-list');
+    if (!container) return;
+    let proyectos = JSON.parse(localStorage.getItem('agora_saas_proyectos') || '[]');
+
+    if (proyectos.length === 0) {
+        container.innerHTML = `<div style="font-size: 11px; color: var(--text-muted);">No hay proyectos registrados.</div>`;
+        return;
+    }
+
+    container.innerHTML = '';
+    proyectos.forEach((p, index) => {
+        let v = new Date(p.vencimiento);
+        let vencido = new Date() > v;
+        const estadoActual = p.estado || 'activo';
+        const colorEstado = estadoActual === 'activo' && !vencido ? '#10b981' : (estadoActual === 'pausado' ? '#f59e0b' : '#ef4444');
+        let card = document.createElement('div');
+        card.className = 'client-card';
+        card.innerHTML = `
+            <div class="client-info">
+                <b>${escapeHTML(p.nombre)}</b><br>
+                Link: <a href="${escapeHTML(p.link)}" target="_blank" style="color: #6ee7b7; word-break: break-all;">${escapeHTML(p.link)}</a><br>
+                Estado: <span style="color: ${colorEstado}">${escapeHTML(estadoActual.toUpperCase())} ${vencido ? '(VENCIDO)' : ''}</span><br>
+                Vence: ${v.toLocaleDateString()}
+            </div>
+            <div class="client-actions">
+                <button onclick="cambiarEstadoProyecto(${index}, '${estadoActual === 'pausado' ? 'activo' : 'pausado'}')" style="background:#f59e0b; color:#111;">${estadoActual === 'pausado' ? 'Activar' : 'Pausar'}</button>
+                <button onclick="cambiarEstadoProyecto(${index}, '${estadoActual === 'bloqueado' ? 'activo' : 'bloqueado'}')" style="background:#dc2626; color:#fff;">${estadoActual === 'bloqueado' ? 'Desbloquear' : 'Bloquear'}</button>
+                <button onclick="quitarProyecto(${index})" style="background:#374151; color:#fff;">Quitar</button>
+                <button onclick="renovarSaas(${index})" style="background:#2563eb; color:#fff;">Renovar 30d</button>
+            </div>
+        `;
+        container.appendChild(card);
+    });
+}
+
+function renovarSaas(index) {
+    let proyectos = JSON.parse(localStorage.getItem('agora_saas_proyectos') || '[]');
+    let v = new Date(proyectos[index].vencimiento);
+    if (new Date() > v) v = new Date();
+    v.setDate(v.getDate() + 30);
+    proyectos[index].vencimiento = v.toISOString();
+    proyectos[index].estado = 'activo';
+    localStorage.setItem('agora_saas_proyectos', JSON.stringify(proyectos));
+    syncColeccionFirestore('agora_secciones', 'saas_proyectos', { items: proyectos });
+    renderSaasClients();
+    alert('¡Licencia renovada por 30 días más!');
+}
+
+// FUNCIONES DE EDICIÓN Y GESTIÓN DE CÓDIGO
+const editor = document.getElementById('code-editor');
+let agoraPreviewUrl = '';
+let agoraLiveWin = null;
+let agoraLiveUrl = '';
+
+function mostrarLinkTiempoReal(url) {
+    const deployInfo = document.getElementById('deploy-info');
+    const deployLink = document.getElementById('deploy-link');
+    if (!deployInfo || !deployLink || !url) return;
+    deployLink.href = url;
+    deployLink.textContent = url;
+    deployInfo.style.display = 'flex';
+    localStorage.setItem('agora_ultimo_link', url);
+}
+
+function guardarLocal() {
+    if (!editor) return;
+    localStorage.setItem('agora_codigo_app', editor.value);
+    syncColeccionFirestore('agora_secciones', 'editor_codigo', { codigo: editor.value });
+    alert('Proyecto guardado en la memoria local.');
+}
+
+function probarLocal() {
+    if (!editor) return;
+    if (agoraPreviewUrl) URL.revokeObjectURL(agoraPreviewUrl);
+    const blob = new Blob([editor.value], { type: 'text/html;charset=utf-8' });
+    agoraPreviewUrl = URL.createObjectURL(blob);
+    mostrarLinkTiempoReal(agoraPreviewUrl);
+    window.open(agoraPreviewUrl, '_blank');
+}
+
+function probarTiempoReal() {
+    if (!editor) return;
+    if (agoraLiveUrl) URL.revokeObjectURL(agoraLiveUrl);
+    const blob = new Blob([editor.value], { type: 'text/html;charset=utf-8' });
+    agoraLiveUrl = URL.createObjectURL(blob);
+    mostrarLinkTiempoReal(agoraLiveUrl);
+    if (agoraLiveWin && !agoraLiveWin.closed) {
+        agoraLiveWin.location.replace(agoraLiveUrl);
+        agoraLiveWin.focus();
+    } else {
+        agoraLiveWin = window.open(agoraLiveUrl, 'agora_live_preview');
+    }
+}
+
+function toolSeleccionarTodo() {
+    if (!editor) return;
+    editor.focus();
+    editor.select();
+}
+
+function toolCopiar() {
+    if (!editor) return;
+    editor.focus();
+    editor.select();
+    navigator.clipboard.writeText(editor.value).then(() => alert('¡Código copiado!'));
+}
+
+async function toolPegar() {
+    if (!editor) return;
+    try {
+        editor.focus();
+        const text = await navigator.clipboard.readText();
+        const start = editor.selectionStart;
+        const end = editor.selectionEnd;
+        editor.value = editor.value.substring(0, start) + text + editor.value.substring(end);
+        editor.selectionStart = editor.selectionEnd = start + text.length;
+        localStorage.setItem('agora_codigo_app', editor.value);
+        syncColeccionFirestore('agora_secciones', 'editor_codigo', { codigo: editor.value });
+        alert('¡Contenido pegado con éxito!');
+    } catch (err) {
+        alert('Tu navegador no permite pegar automáticamente.');
+    }
+}
+
+function toolBorrarSeleccion() {
+    if (!editor) return;
+    editor.focus();
+    const start = editor.selectionStart;
+    const end = editor.selectionEnd;
+    if (start === end) {
+        alert('Seleccioná el texto que querés borrar.');
+        return;
+    }
+    editor.value = editor.value.substring(0, start) + editor.value.substring(end);
+    editor.selectionStart = editor.selectionEnd = start;
+    localStorage.setItem('agora_codigo_app', editor.value);
+    syncColeccionFirestore('agora_secciones', 'editor_codigo', { codigo: editor.value });
+}
+
+function toolLimpiarTodo() {
+    if (!editor) return;
+    if (confirm('¿Vaciar completamente el editor?')) {
+        editor.value = '';
+        localStorage.setItem('agora_codigo_app', '');
+        syncColeccionFirestore('agora_secciones', 'editor_codigo', { codigo: '' });
+    }
+}
+
+function toolInsertarEstructura() {
+    if (!editor) return;
+    editor.value = `<!DOCTYPE html>\n<html lang="es">\n<head>\n    <meta charset="UTF-8">\n    <meta name="viewport" content="width=device-width, initial-scale=1.0">\n    <title>App Cliente / Dashboard onSnapshot</title>\n    <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-app-compat.js"><\\/script>\n    <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-firestore-compat.js"><\\/script>\n    <style>\n        body { background: #121212; color: #fff; font-family: sans-serif; padding: 20px; text-align: center; }\n    </style>\n</head>\n<body>\n    <h1>Panel del Cliente (En tiempo real)</h1>\n    <div id="app-content">Cargando datos desde la nube...</div>\n</body>\n</html>`;
+    localStorage.setItem('agora_codigo_app', editor.value);
+    syncColeccionFirestore('agora_secciones', 'editor_codigo', { codigo: editor.value });
+    alert('Plantilla base insertada.');
+}
+
+function abrirAjustes() {
+    let fontActual = localStorage.getItem('agora_font_size') || '13';
+    let nuevaFuente = prompt("🎛️ PANEL DE AJUSTES\n\nTamaño de letra del editor en píxeles:", fontActual);
+    if (nuevaFuente && !isNaN(nuevaFuente)) {
+        localStorage.setItem('agora_font_size', nuevaFuente.trim());
+        document.documentElement.style.setProperty('--font-size', nuevaFuente.trim() + 'px');
+        syncColeccionFirestore('agora_secciones', 'ajustes', { fontSize: nuevaFuente.trim() });
+        alert('Tamaño actualizado.');
+    }
+}
+
+function configurarGithub() {
+    let repo = prompt("Repositorio GitHub (usuario/repo):", localStorage.getItem('gh_repo') || '');
+    if (repo !== null) localStorage.setItem('gh_repo', repo.trim());
+    let token = prompt("Token Personal de GitHub:", localStorage.getItem('gh_token') || '');
+    if (token !== null) localStorage.setItem('gh_token', token.trim());
+    syncColeccionFirestore('agora_secciones', 'config_deploy', {
+        gh_repo: localStorage.getItem('gh_repo') || '',
+        gh_token: localStorage.getItem('gh_token') || '',
+        firebase_url: localStorage.getItem('firebase_url') || ''
+    });
+}
+
+function configurarFirebase() {
+    let url = prompt("URL de Firebase Hosting:", localStorage.getItem('firebase_url') || '');
+    if (url !== null) localStorage.setItem('firebase_url', url.trim());
+    syncColeccionFirestore('agora_secciones', 'config_deploy', {
+        gh_repo: localStorage.getItem('gh_repo') || '',
+        gh_token: localStorage.getItem('gh_token') || '',
+        firebase_url: localStorage.getItem('firebase_url') || ''
+    });
+}
+
+function copiarLink() {
+    const linkEl = document.getElementById('deploy-link');
+    const url = (linkEl && linkEl.href && linkEl.href !== '#')
+        ? linkEl.href
+        : localStorage.getItem('agora_ultimo_link');
+    if (!url) return alert('Primero generá o probá un enlace.');
+    navigator.clipboard.writeText(url).then(() => alert('¡Link copiado!'));
+}
+
+async function subirAGitHub() {
+    if (!editor) return;
+    const repo = localStorage.getItem('gh_repo');
+    const token = localStorage.getItem('gh_token');
+    if (!repo || !token) {
+        alert('Falta configurar GitHub.');
+        configurarGithub();
+        return;
+    }
+    if (!confirm(`¿Subir a ${repo} (index.html)?`)) return;
+
+    const url = `https://api.github.com/repos/${repo}/contents/index.html`;
+    try {
+        let sha = '';
+        const getRes = await fetch(url, { headers: { 'Authorization': `token ${token}` } });
+        if (getRes.ok) sha = (await getRes.json()).sha;
+
+        const putRes = await fetch(url, {
+            method: 'PUT',
+            headers: { 'Authorization': `token ${token}`, 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+                message: "Actualización automática desde Ágora",
+                content: btoa(unescape(encodeURIComponent(editor.value))),
+                sha: sha || undefined
+            })
+        });
+
+        if (putRes.ok) {
+            const [user, repoName] = repo.split('/');
+            const linkWeb = `https://${user}.github.io/${repoName}/`;
+            localStorage.setItem('agora_ultimo_link', linkWeb);
+            syncColeccionFirestore('agora_secciones', 'ultimo_link', { url: linkWeb });
+            mostrarLinkTiempoReal(linkWeb);
+            alert('¡Subido a GitHub con éxito!');
+        } else {
+            alert('Error al subir los cambios.');
         }
+    } catch (err) {
+        alert('Error de red con GitHub.');
+    }
+}
 
-        // CONVERSOR DE ÍCONOS
-        function cargarImagenParaConvertir(event) {
-            const file = event.target.files[0];
-            if (!file) return;
-            nombreImagenOriginal = file.name.substring(0, file.name.lastIndexOf('.')) || 'icono';
+function subirAFirebase() {
+    const link = localStorage.getItem('firebase_url');
+    if (!link) {
+        configurarFirebase();
+        return;
+    }
+    localStorage.setItem('agora_ultimo_link', link);
+    syncColeccionFirestore('agora_secciones', 'ultimo_link', { url: link });
+    mostrarLinkTiempoReal(link);
+    alert('¡Enlace de Firebase activado!');
+}
 
-            const reader = new FileReader();
-            reader.onload = function(e) {
-                imagenParaConvertirData = e.target.result;
-                document.getElementById('preview-source-img').src = imagenParaConvertirData;
-                document.getElementById('preview-source-name').textContent = file.name;
-                document.getElementById('converter-ui').style.display = 'block';
-            };
-            reader.readAsDataURL(file);
-        }
+// ASISTENTE GEMINI (gemini-3.8-flash)
+function handleKeyPress(e) {
+    if (e && e.key === 'Enter' && !e.shiftKey) {
+        e.preventDefault();
+        enviarMensajeIA();
+    }
+}
 
-        function descargarIcono(size) {
-            if (!imagenParaConvertirData) return;
+async function enviarMensajeIA() {
+    const input = document.getElementById('user-input');
+    if (!input) return;
+    const texto = input.value.trim();
+    if (!texto) return;
 
-            const img = new Image();
-            img.onload = function() {
-                const canvas = document.createElement('canvas');
-                canvas.width = size;
-                canvas.height = size;
-                const ctx = canvas.getContext('2d');
-                ctx.drawImage(img, 0, 0, size, size);
+    const chatBox = document.getElementById('chat-messages');
+    if (!chatBox) return;
 
-                const dataURL = canvas.toDataURL('image/png');
-                const link = document.createElement('a');
-                link.download = `${nombreImagenOriginal}_${size}x${size}.png`;
-                link.href = dataURL;
-                link.click();
-                alert(`¡Ícono de ${size}x${size} descargado con éxito!`);
-            };
-            img.src = imagenParaConvertirData;
-        }
+    chatBox.innerHTML += `<div class="msg user">${escapeHTMLSafe(texto)}</div>`;
+    input.value = '';
+    chatBox.scrollTop = chatBox.scrollHeight;
 
-        // PANEL SAAS, LICENCIAS & WHATSAPP DUAL
-        function agregarNuevoProyectoSaas() {
-            let nombre = prompt("Nombre del proyecto o cliente:");
-            if (!nombre) return;
-            let linkProyecto = prompt("URL del proyecto (ej: https://usuario.github.io/repo/):", localStorage.getItem('agora_ultimo_link') || '');
-            let proyectos = JSON.parse(localStorage.getItem('agora_saas_proyectos') || '[]');
-            let vencimiento = new Date();
-            vencimiento.setDate(vencimiento.getDate() + 30); // 30 días de vigencia inicial
+    const loadingId = 'loading-' + Date.now();
+    chatBox.innerHTML += `<div class="msg ai" id="${loadingId}">Procesando con Gemini (${escapeHTMLSafe(GEMINI_MODEL)})...</div>`;
+    chatBox.scrollTop = chatBox.scrollHeight;
 
-            proyectos.push({
-                nombre: nombre,
-                link: linkProyecto || '#',
-                estado: 'activo',
-                vencimiento: vencimiento.toISOString()
+    const apiKeyActiva = obtenerClaveGeminiActiva();
+    if (!apiKeyActiva) {
+        const el = document.getElementById(loadingId);
+        if (el) el.remove();
+        chatBox.innerHTML += `<div class="msg ai" style="color:#f87171;">Configurá tu API Key de Gemini para esta sesión antes de enviar consultas.</div>`;
+        chatBox.scrollTop = chatBox.scrollHeight;
+        return;
+    }
+
+    const endpoint = `https://generativelanguage.googleapis.com/v1beta/models/${encodeURIComponent(GEMINI_MODEL)}:generateContent?key=${encodeURIComponent(apiKeyActiva)}`;
+    const maxReintentos = 3;
+
+    try {
+        let response = null;
+        let rawText = '';
+        let data = {};
+
+        for (let intento = 1; intento <= maxReintentos; intento++) {
+            const loadingEl = document.getElementById(loadingId);
+            if (loadingEl) {
+                loadingEl.textContent = intento === 1
+                    ? `Procesando con Gemini (${GEMINI_MODEL})...`
+                    : `Servidor saturado (503). Reintentando (${intento}/${maxReintentos})...`;
+            }
+
+            response = await fetch(endpoint, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({
+                    contents: [{ parts: [{ text: texto }] }]
+                })
             });
-            localStorage.setItem('agora_saas_proyectos', JSON.stringify(proyectos));
-            renderSaasClients();
-            alert('¡Proyecto registrado con éxito!');
+
+            rawText = await response.text();
+            try { data = rawText ? JSON.parse(rawText) : {}; } catch (_) { data = {}; }
+
+            if (response.status !== 503 || intento === maxReintentos) break;
+            await new Promise(resolve => setTimeout(resolve, 1500 * intento));
         }
 
-        function renderSaasClients() {
-            const container = document.getElementById('saas-clients-list');
-            let proyectos = JSON.parse(localStorage.getItem('agora_saas_proyectos') || '[]');
+        const loadingEl = document.getElementById(loadingId);
+        if (loadingEl) loadingEl.remove();
 
-            if (proyectos.length === 0) {
-                container.innerHTML = `<div style="font-size: 11px; color: var(--text-muted);">No hay proyectos registrados.</div>`;
-                return;
-            }
-
-            container.innerHTML = '';
-            proyectos.forEach((p, index) => {
-                let v = new Date(p.vencimiento);
-                let vencido = new Date() > v;
-                let card = document.createElement('div');
-                card.className = 'client-card';
-                card.innerHTML = `
-                    <div class="client-info">
-                        <b>${p.nombre}</b><br>
-                        Link: <a href="${p.link}" target="_blank" style="color: #6ee7b7; word-break: break-all;">${p.link}</a><br>
-                        Estado: <span style="color: ${p.estado === 'activo' && !vencido ? '#10b981' : '#ef4444'}">${p.estado.toUpperCase()} ${vencido ? '(VENCIDO)' : ''}</span><br>
-                        Vence: ${v.toLocaleDateString()}
-                    </div>
-                    <div class="client-actions">
-                        <button onclick="toggleEstadoSaas(${index})" style="background:${p.estado === 'activo' ? '#ef4444' : '#10b981'}; color:#fff;">${p.estado === 'activo' ? 'Pausar' : 'Activar'}</button>
-                        <button onclick="renovarSaas(${index})" style="background:#2563eb; color:#fff;">Renovar 30d</button>
-                        <button onclick="enviarWhatsAppAlquiler(${index})" style="background:#25d366; color:#fff;">💬 WhatsApp (Alquiler)</button>
-                        <button onclick="enviarWhatsAppVenta(${index})" style="background:#059669; color:#fff;">💬 WhatsApp (Venta)</button>
-                    </div>
-                `;
-                container.appendChild(card);
-            });
-        }
-
-        function toggleEstadoSaas(index) {
-            let proyectos = JSON.parse(localStorage.getItem('agora_saas_proyectos') || '[]');
-            proyectos[index].estado = proyectos[index].estado === 'activo' ? 'pausado' : 'activo';
-            localStorage.setItem('agora_saas_proyectos', JSON.stringify(proyectos));
-            renderSaasClients();
-        }
-
-        function renovarSaas(index) {
-            let proyectos = JSON.parse(localStorage.getItem('agora_saas_proyectos') || '[]');
-            let v = new Date(proyectos[index].vencimiento);
-            if (new Date() > v) v = new Date();
-            v.setDate(v.getDate() + 30);
-            proyectos[index].vencimiento = v.toISOString();
-            proyectos[index].estado = 'activo';
-            localStorage.setItem('agora_saas_proyectos', JSON.stringify(proyectos));
-            renderSaasClients();
-            alert('¡Licencia renovada por 30 días más!');
-        }
-
-        function enviarWhatsAppAlquiler(index) {
-            let proyectos = JSON.parse(localStorage.getItem('agora_saas_proyectos') || '[]');
-            let p = proyectos[index];
-            let v = new Date(p.vencimiento).toLocaleDateString();
-            let mensaje = `Hola ${p.nombre}! Te escribimos desde soporte técnico. Tu aplicación ya se encuentra en línea y actualizada. Podés visitarla acá: ${p.link}. Recordá que tu abono mensual se encuentra activo con vencimiento el ${v}. ¡Cualquier consulta estamos a disposición!`;
-            
-            navigator.clipboard.writeText(mensaje).then(() => {
-                alert('¡Mensaje de WhatsApp (Alquiler) copiado al portapapeles!');
-            }).catch(() => {
-                prompt("Copiá tu mensaje:", mensaje);
-            });
-        }
-
-        function enviarWhatsAppVenta(index) {
-            let proyectos = JSON.parse(localStorage.getItem('agora_saas_proyectos') || '[]');
-            let p = proyectos[index];
-            let mensaje = `Hola ${p.nombre}! Te escribimos para hacerte entrega oficial de tu aplicación web definitiva. Ya se encuentra funcionando y lista para usar en el siguiente enlace: ${p.link}. ¡Esperamos que disfrutes de tu plataforma!`;
-            
-            navigator.clipboard.writeText(mensaje).then(() => {
-                alert('¡Mensaje de WhatsApp (Venta Final) copiado al portapapeles!');
-            }).catch(() => {
-                prompt("Copiá tu mensaje:", mensaje);
-            });
-        }
-
-        // FUNCIONES DE EDICIÓN Y GESTIÓN DE CÓDIGO
-        const editor = document.getElementById('code-editor');
-
-        function guardarLocal() {
-            localStorage.setItem('agora_codigo_app', editor.value);
-            alert('Proyecto guardado en la memoria local.');
-        }
-
-        function probarLocal() {
-            const blob = new Blob([editor.value], { type: 'text/html;charset=utf-8' });
-            window.open(URL.createObjectURL(blob), '_blank');
-        }
-
-        function toolSeleccionarTodo() {
-            editor.focus();
-            editor.select();
-        }
-
-        function toolCopiar() {
-            editor.focus();
-            editor.select();
-            navigator.clipboard.writeText(editor.value).then(() => alert('¡Código copiado!'));
-        }
-
-        async function toolPegar() {
-            try {
-                editor.focus();
-                const text = await navigator.clipboard.readText();
-                const start = editor.selectionStart;
-                const end = editor.selectionEnd;
-                editor.value = editor.value.substring(0, start) + text + editor.value.substring(end);
-                editor.selectionStart = editor.selectionEnd = start + text.length;
-                localStorage.setItem('agora_codigo_app', editor.value);
-                alert('¡Contenido pegado con éxito!');
-            } catch (err) {
-                alert('Tu navegador no permite pegar automáticamente.');
-            }
-        }
-
-        function toolBorrarSeleccion() {
-            editor.focus();
-            const start = editor.selectionStart;
-            const end = editor.selectionEnd;
-            if (start === end) {
-                alert('Seleccioná el texto que querés borrar.');
-                return;
-            }
-            editor.value = editor.value.substring(0, start) + editor.value.substring(end);
-            editor.selectionStart = editor.selectionEnd = start;
-            localStorage.setItem('agora_codigo_app', editor.value);
-        }
-
-        function toolLimpiarTodo() {
-            if (confirm('¿Vaciar completamente el editor?')) {
-                editor.value = '';
-                localStorage.setItem('agora_codigo_app', '');
-            }
-        }
-
-        function toolInsertarEstructura() {
-            editor.value = `<!DOCTYPE html>\n<html lang="es">\n<head>\n    <meta charset="UTF-8">\n    <meta name="viewport" content="width=device-width, initial-scale=1.0">\n    <title>App Cliente / Dashboard onSnapshot</title>\n    <!-- Firebase SDK y onSnapshot para tiempo real -->\n    <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-app-compat.js"><\\/script>\n    <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-firestore-compat.js"><\\/script>\n    <style>\n        body { background: #121212; color: #fff; font-family: sans-serif; padding: 20px; text-align: center; }\n        .paywall { position: fixed; top:0; left:0; width:100%; height:100%; background:rgba(0,0,0,0.95); display:flex; flex-direction:column; justify-content:center; align-items:center; z-index:99999; padding:20px; }\n        .paywall h2 { color: #f59e0b; margin-bottom: 10px; }\n    </style>\n</head>\n<body>\n    <!-- Cartel de bloqueo automático por abono vencido o pausado -->\n    <div id=\"paywall-modal\" class=\"paywall\" style=\"display:none;\">\n        <h2>⚠️ Servicio Pausado o Vencido</h2>\n        <p>El abono de esta aplicación requiere renovación para continuar operando en línea.</p>\n    </div>\n\n    <h1>Panel del Cliente (En tiempo real)</h1>\n    <div id=\"app-content\">Cargando datos desde la nube...</div>\n\n    <script>\n        // Configuración Firebase del cliente (Reemplazar con tus credenciales)\n        // const firebaseConfig = { ... };\n        // firebase.initializeApp(firebaseConfig);\n        // const db = firebase.firestore();\n        // \n        // db.collection(\"licencias\").doc(\"estado_proyecto\").onSnapshot((doc) => {\n        //     if (doc.exists && doc.data().estado !== \"activo\") {\n        //         document.getElementById(\"paywall-modal\").style.display = \"flex\";\n        //     } else {\n        //         document.getElementById(\"paywall-modal\").style.display = \"none\";\n        //     }\n        // });\n    <\\/script>\n</body>\n</html>`;
-            localStorage.setItem('agora_codigo_app', editor.value);
-            alert('Plantilla base con onSnapshot y paywall insertada.');
-        }
-
-        function abrirAjustes() {
-            let fontActual = localStorage.getItem('agora_font_size') || '13';
-            let nuevaFuente = prompt("🎛️ PANEL DE AJUSTES\n\nTamaño de letra del editor en píxeles:", fontActual);
-            if (nuevaFuente && !isNaN(nuevaFuente)) {
-                localStorage.setItem('agora_font_size', nuevaFuente.trim());
-                document.documentElement.style.setProperty('--font-size', nuevaFuente.trim() + 'px');
-                alert('Tamaño actualizado.');
-            }
-        }
-
-        function configurarGithub() {
-            let repo = prompt("Repositorio GitHub (usuario/repo):", localStorage.getItem('gh_repo') || '');
-            if (repo !== null) localStorage.setItem('gh_repo', repo.trim());
-            let token = prompt("Token Personal de GitHub:", localStorage.getItem('gh_token') || '');
-            if (token !== null) localStorage.setItem('gh_token', token.trim());
-        }
-
-        function configurarFirebase() {
-            let url = prompt("URL de Firebase Hosting:", localStorage.getItem('firebase_url') || '');
-            if (url !== null) localStorage.setItem('firebase_url', url.trim());
-        }
-
-        function mostrarPanelLink(url) {
-            const deployInfo = document.getElementById('deploy-info');
-            const deployLink = document.getElementById('deploy-link');
-            deployLink.href = url;
-            deployLink.textContent = url;
-            deployInfo.style.display = 'flex';
-        }
-
-        function copiarLink() {
-            navigator.clipboard.writeText(document.getElementById('deploy-link').href).then(() => alert('¡Link copiado!'));
-        }
-
-        async function subirAGitHub() {
-            const repo = localStorage.getItem('gh_repo');
-            const token = localStorage.getItem('gh_token');
-            if (!repo || !token) {
-                alert('Falta configurar GitHub.');
-                configurarGithub();
-                return;
-            }
-            if (!confirm(`¿Subir a ${repo} (index.html)?`)) return;
-
-            const url = `https://api.github.com/repos/${repo}/contents/index.html`;
-            try {
-                let sha = '';
-                const getRes = await fetch(url, { headers: { 'Authorization': `token ${token}` } });
-                if (getRes.ok) sha = (await getRes.json()).sha;
-
-                const putRes = await fetch(url, {
-                    method: 'PUT',
-                    headers: { 'Authorization': `token ${token}`, 'Content-Type': 'application/json' },
-                    body: JSON.stringify({
-                        message: "Actualización automática desde Ágora",
-                        content: btoa(unescape(encodeURIComponent(editor.value))),
-                        sha: sha || undefined
-                    })
-                });
-
-                if (putRes.ok) {
-                    const [user, repoName] = repo.split('/');
-                    const linkWeb = `https://${user}.github.io/${repoName}/`;
-                    localStorage.setItem('agora_ultimo_link', linkWeb);
-                    mostrarPanelLink(linkWeb);
-                    alert('¡Subido a GitHub con éxito!');
-                } else {
-                    alert('Error al subir los cambios.');
-                }
-            } catch (err) {
-                alert('Error de red con GitHub.');
-            }
-        }
-
-        function subirAFirebase() {
-            const link = localStorage.getItem('firebase_url');
-            if (!link) {
-                configurarFirebase();
-                return;
-            }
-            localStorage.setItem('agora_ultimo_link', link);
-            mostrarPanelLink(link);
-            alert('¡Enlace de Firebase activado!');
-        }
-
-        // 1. ASISTENTE CON NUEVA API KEY (GEMINI 3.8 FLASH + MANEJO IF (!RES.OK))
-        function handleKeyPress(e) {
-            if (e.key === 'Enter') enviarMensajeIA();
-        }
-
-        async function enviarMensajeIA() {
-            const input = document.getElementById('user-input');
-            const texto = input.value.trim();
-            if (!texto) return;
-
-            const chatBox = document.getElementById('chat-messages');
-            chatBox.innerHTML += `<div class="msg user">${escapeHTML(texto)}</div>`;
-            input.value = '';
+        if (!response.ok) {
+            const detalleError = data?.error?.message || rawText || 'Error de respuesta de la API';
+            chatBox.innerHTML += `<div class="msg ai" style="color:#f87171;">Error HTTP ${response.status}: ${escapeHTMLSafe(detalleError)}</div>`;
             chatBox.scrollTop = chatBox.scrollHeight;
-
-            const loadingId = 'loading-' + Date.now();
-            chatBox.innerHTML += `<div class="msg ai" id="${loadingId}">Procesando con Gemini (gemini-3.8-flash)...</div>`;
-
-            if (!GEMINI_API_KEY) {
-                const el = document.getElementById(loadingId);
-                if (el) el.remove();
-                chatBox.innerHTML += `<div class="msg ai" style="color:#f87171;">Configurá tu constante GEMINI_API_KEY en el código antes de enviar consultas.</div>`;
-                chatBox.scrollTop = chatBox.scrollHeight;
-                return;
-            }
-
-            try {
-                const endpoint = `https://generativelanguage.googleapis.com/v1beta/models/gemini-3.8-flash:generateContent?key=${encodeURIComponent(GEMINI_API_KEY)}`;
-
-                const response = await fetch(endpoint, {
-                    method: 'POST',
-                    headers: {
-                        'Content-Type': 'application/json'
-                    },
-                    body: JSON.stringify({
-                        contents: [{
-                            parts: [{ text: texto }]
-                        }]
-                    })
-                });
-
-                const rawText = await response.text();
-                let data = {};
-                try {
-                    data = rawText ? JSON.parse(rawText) : {};
-                } catch (_) {
-                    data = { error: { message: rawText || 'Respuesta no JSON' } };
-                }
-
-                const loadingEl = document.getElementById(loadingId);
-                if (loadingEl) loadingEl.remove();
-
-                if (!response.ok) {
-                    const detalleError = (data && data.error && data.error.message) ? data.error.message : (rawText || 'Error de respuesta de la API');
-                    chatBox.innerHTML += `<div class="msg ai" style="color:#f87171;">Error HTTP ${response.status}: ${escapeHTML(detalleError)}</div>`;
-                    chatBox.scrollTop = chatBox.scrollHeight;
-                    return;
-                }
-
-                const respuestaIA = data &&
-                    data.candidates &&
-                    data.candidates[0] &&
-                    data.candidates[0].content &&
-                    data.candidates[0].content.parts &&
-                    data.candidates[0].content.parts[0] &&
-                    data.candidates[0].content.parts[0].text;
-
-                if (respuestaIA) {
-                    chatBox.innerHTML += `<div class="msg ai">${escapeHTML(respuestaIA)}</div>`;
-                } else {
-                    chatBox.innerHTML += `<div class="msg ai" style="color:#f87171;">La API respondió sin texto utilizable.</div>`;
-                }
-            } catch (error) {
-                const loadingEl = document.getElementById(loadingId);
-                if (loadingEl) loadingEl.remove();
-                chatBox.innerHTML += `<div class="msg ai" style="color:#f87171;">Error de conexión o red al consultar Gemini: ${escapeHTML(error && error.message ? error.message : String(error))}</div>`;
-            }
-            chatBox.scrollTop = chatBox.scrollHeight;
+            return;
         }
 
-        // 2. BOTÓN DE VOZ EN ES-AR CON TRADUCCIÓN AUTOMÁTICA
-        let recognitionInstance = null;
-        let isRecognizingVoice = false;
-
-        function setVoiceStatus(msg, isError) {
-            const statusEl = document.getElementById('voice-status');
-            if (!statusEl) return;
-            statusEl.textContent = msg;
-            statusEl.style.color = isError ? '#f87171' : 'var(--text-muted)';
+        const respuestaIA = data?.candidates?.[0]?.content?.parts?.[0]?.text;
+        if (respuestaIA) {
+            chatBox.innerHTML += `<div class="msg ai">${escapeHTMLSafe(respuestaIA)}</div>`;
+        } else {
+            chatBox.innerHTML += `<div class="msg ai" style="color:#f87171;">La API respondió sin texto utilizable.</div>`;
         }
+    } catch (error) {
+        const loadingEl = document.getElementById(loadingId);
+        if (loadingEl) loadingEl.remove();
+        chatBox.innerHTML += `<div class="msg ai" style="color:#f87171;">Error de conexión o red al consultar Gemini: ${escapeHTMLSafe(error?.message || String(error))}</div>`;
+    }
+    chatBox.scrollTop = chatBox.scrollHeight;
+}
 
-        async function traducirTextoVoz(textoEs, targetLang) {
-            if (!textoEs || targetLang === 'es') return textoEs;
+// BOTÓN DE VOZ EN ES-AR CON TRADUCCIÓN AUTOMÁTICA
+let recognitionInstance = null;
+let isRecognizingVoice = false;
 
-            try {
-                const url = `https://api.mymemory.translated.net/get?q=${encodeURIComponent(textoEs)}&langpair=es|${encodeURIComponent(targetLang)}`;
-                const res = await fetch(url);
-                if (res.ok) {
-                    const json = await res.json();
-                    const translated = json && json.responseData && json.responseData.translatedText;
-                    if (translated && !/MYMEMORY WARNING/i.test(translated)) {
-                        return translated.trim();
-                    }
-                }
-            } catch (_) {
-                // Intenta respaldo con Gemini si está configurada la clave
-            }
+function setVoiceStatus(msg, isError) {
+    const statusEl = document.getElementById('voice-status');
+    if (!statusEl) return;
+    statusEl.textContent = msg;
+    statusEl.style.color = isError ? '#f87171' : 'var(--text-muted)';
+}
 
-            if (GEMINI_API_KEY) {
-                try {
-                    const endpoint = `https://generativelanguage.googleapis.com/v1beta/models/gemini-3.8-flash:generateContent?key=${encodeURIComponent(GEMINI_API_KEY)}`;
-                    const prompt = `Translate the following Spanish text accurately to language code "${targetLang}". Return ONLY the translated text with no extra notes or quotes:\n\n${textoEs}`;
-                    const res = await fetch(endpoint, {
-                        method: 'POST',
-                        headers: { 'Content-Type': 'application/json' },
-                        body: JSON.stringify({
-                            contents: [{ parts: [{ text: prompt }] }]
-                        })
-                    });
-                    if (res.ok) {
-                        const data = await res.json();
-                        const out = data &&
-                            data.candidates &&
-                            data.candidates[0] &&
-                            data.candidates[0].content &&
-                            data.candidates[0].content.parts &&
-                            data.candidates[0].content.parts[0] &&
-                            data.candidates[0].content.parts[0].text;
-                        if (out) return out.trim();
-                    }
-                } catch (_) {
-                    // Fallback al texto original si no hay traducción disponible
-                }
-            }
-
-            return textoEs;
+async function traducirTextoVoz(textoEs, targetLang) {
+    if (!textoEs || targetLang === 'es') return textoEs;
+    try {
+        const url = `https://api.mymemory.translated.net/get?q=${encodeURIComponent(textoEs)}&langpair=es|${encodeURIComponent(targetLang)}`;
+        const res = await fetch(url);
+        if (res.ok) {
+            const json = await res.json();
+            const translated = json?.responseData?.translatedText;
+            if (translated && !/MYMEMORY WARNING/i.test(translated)) return translated.trim();
         }
+    } catch (_) {}
+    return textoEs;
+}
 
-        function toggleDictadoVoz() {
-            const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
-            const btn = document.getElementById('voice-btn');
-            const input = document.getElementById('user-input');
-            const targetSelect = document.getElementById('voice-target-lang');
+function toggleDictadoVoz() {
+    const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
+    const btn = document.getElementById('voice-btn');
+    const input = document.getElementById('user-input');
+    const targetSelect = document.getElementById('voice-target-lang');
 
-            if (!SpeechRecognition) {
-                setVoiceStatus('Voz no soportada en este navegador', true);
-                alert('Tu navegador o dispositivo no soporta Web Speech API (SpeechRecognition).');
-                return;
-            }
+    if (!SpeechRecognition) {
+        setVoiceStatus('Voz no soportada en este navegador', true);
+        return;
+    }
 
-            if (isRecognizingVoice && recognitionInstance) {
-                try {
-                    recognitionInstance.stop();
-                } catch (_) {}
-                isRecognizingVoice = false;
-                if (btn) btn.classList.remove('listening');
-                setVoiceStatus('Dictado detenido');
-                return;
-            }
+    if (isRecognizingVoice && recognitionInstance) {
+        try { recognitionInstance.stop(); } catch (_) {}
+        isRecognizingVoice = false;
+        if (btn) btn.classList.remove('listening');
+        setVoiceStatus('Dictado detenido');
+        return;
+    }
 
-            try {
-                const rec = new SpeechRecognition();
-                recognitionInstance = rec;
-                rec.lang = 'es-AR';
-                rec.interimResults = false;
-                rec.maxAlternatives = 1;
+    const rec = new SpeechRecognition();
+    recognitionInstance = rec;
+    rec.lang = 'es-AR';
+    rec.interimResults = false;
+    rec.maxAlternatives = 1;
 
-                rec.onstart = function() {
-                    isRecognizingVoice = true;
-                    if (btn) btn.classList.add('listening');
-                    setVoiceStatus('Escuchando en es-AR...');
-                };
+    rec.onstart = function() {
+        isRecognizingVoice = true;
+        if (btn) btn.classList.add('listening');
+        setVoiceStatus('Escuchando en es-AR...');
+    };
 
-                rec.onresult = async function(event) {
-                    const transcript = (event.results &&
-                        event.results[0] &&
-                        event.results[0][0] &&
-                        event.results[0][0].transcript) ? event.results[0][0].transcript.trim() : '';
-
-                    if (!transcript) {
-                        setVoiceStatus('No se detectó voz clara', true);
-                        return;
-                    }
-
-                    const targetLang = targetSelect ? targetSelect.value : 'en';
-                    setVoiceStatus(`Traduciendo a ${targetLang.toUpperCase()}...`);
-                    const textoListo = await traducirTextoVoz(transcript, targetLang);
-
-                    if (input) {
-                        input.value = input.value ? `${input.value} ${textoListo}` : textoListo;
-                        input.focus();
-                    }
-                    setVoiceStatus(targetLang === 'es' ? 'Listo para enviar (ES)' : `Traducido (${targetLang.toUpperCase()}) y listo`);
-                };
-
-                rec.onerror = function(event) {
-                    isRecognizingVoice = false;
-                    if (btn) btn.classList.remove('listening');
-                    const errCode = event && event.error ? event.error : 'unknown';
-                    if (errCode === 'not-allowed' || errCode === 'service-not-allowed') {
-                        setVoiceStatus('Permiso de micrófono denegado', true);
-                        alert('Permiso de micrófono denegado. Habilitá el acceso al micrófono para usar 🎤.');
-                    } else if (errCode === 'no-speech') {
-                        setVoiceStatus('No se escuchó voz', true);
-                    } else if (errCode === 'network') {
-                        setVoiceStatus('Error de red en reconocimiento de voz', true);
-                    } else {
-                        setVoiceStatus(`Error de voz: ${errCode}`, true);
-                    }
-                };
-
-                rec.onend = function() {
-                    isRecognizingVoice = false;
-                    if (btn) btn.classList.remove('listening');
-                };
-
-                rec.start();
-            } catch (err) {
-                isRecognizingVoice = false;
-                if (btn) btn.classList.remove('listening');
-                setVoiceStatus('No se pudo iniciar el micrófono', true);
-                alert('No se pudo iniciar el micrófono: ' + (err && err.message ? err.message : String(err)));
-            }
+    rec.onresult = async function(event) {
+        const transcript = event?.results?.[0]?.[0]?.transcript?.trim() || '';
+        if (!transcript) {
+            setVoiceStatus('No se detectó voz clara', true);
+            return;
         }
+        const targetLang = targetSelect ? targetSelect.value : 'en';
+        setVoiceStatus(`Traduciendo a ${targetLang.toUpperCase()}...`);
+        const textoListo = await traducirTextoVoz(transcript, targetLang);
+        if (input) {
+            input.value = input.value ? `${input.value} ${textoListo}` : textoListo;
+            input.focus();
+        }
+        setVoiceStatus(targetLang === 'es' ? 'Listo para enviar (ES)' : `Traducido (${targetLang.toUpperCase()}) y listo`);
+    };
 
-        // 3. SECCIÓN APARTE "PLANTILLAS PROFESIONALES" (4 MODELOS + CONTRASEÑA FIJA)
-        let tplEstado = {
-            modelo: 'catalogo',
-            negocio: '',
-            subtitulo: '',
-            whatsapp: '',
-            heroImg: '',
-            ownerPass: '1234',
-            items: []
-        };
+    rec.onerror = function(event) {
+        isRecognizingVoice = false;
+        if (btn) btn.classList.remove('listening');
+        setVoiceStatus(`Error de voz: ${event?.error || 'unknown'}`, true);
+    };
 
-        function cargarEstadoPlantillas() {
-            const guardado = localStorage.getItem('agora_plantillas_borrador');
-            if (guardado) {
-                try {
-                    const parsed = JSON.parse(guardado);
-                    tplEstado = Object.assign({}, tplEstado, parsed);
-                } catch (_) {}
-            }
-            seleccionarModeloPlantilla(tplEstado.modelo || 'catalogo', true);
-            const nEl = document.getElementById('tpl-business-name');
-            const sEl = document.getElementById('tpl-business-sub');
-            const wEl = document.getElementById('tpl-whatsapp');
+    rec.onend = function() {
+        isRecognizingVoice = false;
+        if (btn) btn.classList.remove('listening');
+    };
+
+    rec.start();
+}
+
+// PLANTILLAS PROFESIONALES (4 MODELOS + CONTRASEÑA FIJA)
+let tplEstado = {
+    modelo: 'catalogo',
+    negocio: '',
+    subtitulo: '',
+    whatsapp: '',
+    heroImg: '',
+    ownerPass: '1234',
+    items: []
+};
+
+function cargarEstadoPlantillas() {
+    const guardado = localStorage.getItem('agora_plantillas_borrador');
+    if (guardado) {
+        try {
+            const parsed = JSON.parse(guardado);
+            tplEstado = Object.assign({}, tplEstado, parsed);
+        } catch (_) {}
+    }
+    seleccionarModeloPlantilla(tplEstado.modelo || 'catalogo', true);
+    const nEl = document.getElementById('tpl-business-name');
+    const sEl = document.getElementById('tpl-business-sub');
+    const wEl = document.getElementById('tpl-whatsapp');
+    const hEl = document.getElementById('tpl-hero-img');
+    const pEl = document.getElementById('tpl-owner-pass');
+    if (nEl) nEl.value = tplEstado.negocio || '';
+    if (sEl) sEl.value = tplEstado.subtitulo || '';
+    if (wEl) wEl.value = tplEstado.whatsapp || '';
+    if (hEl) hEl.value = tplEstado.heroImg || '';
+    if (pEl) pEl.value = tplEstado.ownerPass || '1234';
+    renderListaItemsPlantilla();
+}
+
+function seleccionarModeloPlantilla(modelo, silent) {
+    tplEstado.modelo = modelo;
+    ['catalogo', 'turnero', 'carta', 'landing'].forEach(m => {
+        const btn = document.getElementById('tpl-btn-' + m);
+        if (btn) {
+            if (m === modelo) btn.classList.add('active');
+            else btn.classList.remove('active');
+        }
+    });
+    if (!silent) guardarBorradorPlantilla(true);
+}
+
+function cargarFotoPlantilla(event, destino) {
+    const file = event.target.files && event.target.files[0];
+    if (!file) return;
+    const reader = new FileReader();
+    reader.onload = function(e) {
+        if (destino === 'hero') {
             const hEl = document.getElementById('tpl-hero-img');
-            const pEl = document.getElementById('tpl-owner-pass');
-            if (nEl) nEl.value = tplEstado.negocio || '';
-            if (sEl) sEl.value = tplEstado.subtitulo || '';
-            if (wEl) wEl.value = tplEstado.whatsapp || '';
-            if (hEl) hEl.value = tplEstado.heroImg || '';
-            if (pEl) pEl.value = tplEstado.ownerPass || '1234';
-            renderListaItemsPlantilla();
+            if (hEl) hEl.value = e.target.result;
+        } else {
+            const iEl = document.getElementById('tpl-item-img');
+            if (iEl) iEl.value = e.target.result;
         }
+    };
+    reader.readAsDataURL(file);
+}
 
-        function seleccionarModeloPlantilla(modelo, silent) {
-            tplEstado.modelo = modelo;
-            ['catalogo', 'turnero', 'carta', 'landing'].forEach(m => {
-                const btn = document.getElementById('tpl-btn-' + m);
-                if (btn) {
-                    if (m === modelo) btn.classList.add('active');
-                    else btn.classList.remove('active');
-                }
-            });
-            if (!silent) guardarBorradorPlantilla(true);
-        }
+function agregarItemPlantilla() {
+    const tituloEl = document.getElementById('tpl-item-title');
+    const precioEl = document.getElementById('tpl-item-price');
+    const descEl = document.getElementById('tpl-item-desc');
+    const imgEl = document.getElementById('tpl-item-img');
 
-        function cargarFotoPlantilla(event, destino) {
-            const file = event.target.files && event.target.files[0];
-            if (!file) return;
-            const reader = new FileReader();
-            reader.onload = function(e) {
-                if (destino === 'hero') {
-                    const hEl = document.getElementById('tpl-hero-img');
-                    if (hEl) hEl.value = e.target.result;
-                } else {
-                    const iEl = document.getElementById('tpl-item-img');
-                    if (iEl) iEl.value = e.target.result;
-                }
-            };
-            reader.readAsDataURL(file);
-        }
+    const titulo = tituloEl ? tituloEl.value.trim() : '';
+    const precio = precioEl ? precioEl.value.trim() : '';
+    const desc = descEl ? descEl.value.trim() : '';
+    const img = imgEl ? imgEl.value.trim() : '';
 
-        function agregarItemPlantilla() {
-            const tituloEl = document.getElementById('tpl-item-title');
-            const precioEl = document.getElementById('tpl-item-price');
-            const descEl = document.getElementById('tpl-item-desc');
-            const imgEl = document.getElementById('tpl-item-img');
+    if (!titulo) {
+        alert('Ingresá al menos el título del ítem.');
+        return;
+    }
 
-            const titulo = tituloEl ? tituloEl.value.trim() : '';
-            const precio = precioEl ? precioEl.value.trim() : '';
-            const desc = descEl ? descEl.value.trim() : '';
-            const img = imgEl ? imgEl.value.trim() : '';
+    tplEstado.items.push({
+        id: 'item_' + Date.now() + '_' + Math.floor(Math.random() * 1000),
+        title: titulo,
+        price: precio || '0',
+        desc: desc,
+        img: img
+    });
 
-            if (!titulo) {
-                alert('Ingresá al menos el título del ítem.');
-                return;
-            }
+    if (tituloEl) tituloEl.value = '';
+    if (precioEl) precioEl.value = '';
+    if (descEl) descEl.value = '';
+    if (imgEl) imgEl.value = '';
 
-            tplEstado.items.push({
-                id: 'item_' + Date.now() + '_' + Math.floor(Math.random() * 1000),
-                title: titulo,
-                price: precio || '0',
-                desc: desc,
-                img: img
-            });
+    renderListaItemsPlantilla();
+    guardarBorradorPlantilla(true);
+}
 
-            if (tituloEl) tituloEl.value = '';
-            if (precioEl) precioEl.value = '';
-            if (descEl) descEl.value = '';
-            if (imgEl) imgEl.value = '';
+function quitarItemPlantilla(index) {
+    tplEstado.items.splice(index, 1);
+    renderListaItemsPlantilla();
+    guardarBorradorPlantilla(true);
+}
 
-            renderListaItemsPlantilla();
-            guardarBorradorPlantilla(true);
-        }
+function renderListaItemsPlantilla() {
+    const cont = document.getElementById('tpl-items-list');
+    if (!cont) return;
+    if (!tplEstado.items || tplEstado.items.length === 0) {
+        cont.innerHTML = `<div style="font-size:11px; color:var(--text-muted);">Sin ítems cargados todavía.</div>`;
+        return;
+    }
+    cont.innerHTML = '';
+    tplEstado.items.forEach((it, idx) => {
+        const row = document.createElement('div');
+        row.className = 'tpl-item-row';
+        row.innerHTML = `
+            <div>
+                <b>${escapeHTML(it.title)}</b>${it.price && it.price !== '0' ? ` — $${escapeHTML(it.price)}` : ''}<br>
+                <span style="color:var(--text-muted);">${escapeHTML(it.desc || '')}</span>
+            </div>
+            <button type="button" onclick="quitarItemPlantilla(${idx})" style="background:#ef4444; color:#fff; border:none; border-radius:4px; padding:4px 8px; cursor:pointer; font-size:11px;">✕</button>
+        `;
+        cont.appendChild(row);
+    });
+}
 
-        function quitarItemPlantilla(index) {
-            tplEstado.items.splice(index, 1);
-            renderListaItemsPlantilla();
-            guardarBorradorPlantilla(true);
-        }
+function sincronizarFormularioPlantilla() {
+    const nEl = document.getElementById('tpl-business-name');
+    const sEl = document.getElementById('tpl-business-sub');
+    const wEl = document.getElementById('tpl-whatsapp');
+    const hEl = document.getElementById('tpl-hero-img');
+    const pEl = document.getElementById('tpl-owner-pass');
 
-        function renderListaItemsPlantilla() {
-            const cont = document.getElementById('tpl-items-list');
-            if (!cont) return;
-            if (!tplEstado.items || tplEstado.items.length === 0) {
-                cont.innerHTML = `<div style="font-size:11px; color:var(--text-muted);">Sin ítems cargados todavía.</div>`;
-                return;
-            }
-            cont.innerHTML = '';
-            tplEstado.items.forEach((it, idx) => {
-                const row = document.createElement('div');
-                row.className = 'tpl-item-row';
-                row.innerHTML = `
-                    <div>
-                        <b>${escapeHTML(it.title)}</b>${it.price && it.price !== '0' ? ` — $${escapeHTML(it.price)}` : ''}<br>
-                        <span style="color:var(--text-muted);">${escapeHTML(it.desc || '')}</span>
-                    </div>
-                    <button type="button" onclick="quitarItemPlantilla(${idx})" style="background:#ef4444; color:#fff; border:none; border-radius:4px; padding:4px 8px; cursor:pointer; font-size:11px;">✕</button>
-                `;
-                cont.appendChild(row);
-            });
-        }
+    tplEstado.negocio = nEl ? nEl.value.trim() : tplEstado.negocio;
+    tplEstado.subtitulo = sEl ? sEl.value.trim() : tplEstado.subtitulo;
+    tplEstado.whatsapp = wEl ? wEl.value.trim() : tplEstado.whatsapp;
+    tplEstado.heroImg = hEl ? hEl.value.trim() : tplEstado.heroImg;
+    const passIngresada = pEl ? pEl.value.trim() : '';
+    if (passIngresada) tplEstado.ownerPass = passIngresada;
+    else if (!tplEstado.ownerPass) tplEstado.ownerPass = '1234';
+}
 
-        function sincronizarFormularioPlantilla() {
-            const nEl = document.getElementById('tpl-business-name');
-            const sEl = document.getElementById('tpl-business-sub');
-            const wEl = document.getElementById('tpl-whatsapp');
-            const hEl = document.getElementById('tpl-hero-img');
-            const pEl = document.getElementById('tpl-owner-pass');
+function guardarBorradorPlantilla(silent) {
+    sincronizarFormularioPlantilla();
+    localStorage.setItem('agora_plantillas_borrador', JSON.stringify(tplEstado));
+    syncColeccionFirestore('agora_secciones', 'plantillas_borrador', { borrador: tplEstado });
+    if (!silent) alert('Borrador de plantilla guardado en Ágora.');
+}
 
-            tplEstado.negocio = nEl ? nEl.value.trim() : tplEstado.negocio;
-            tplEstado.subtitulo = sEl ? sEl.value.trim() : tplEstado.subtitulo;
-            tplEstado.whatsapp = wEl ? wEl.value.trim() : tplEstado.whatsapp;
-            tplEstado.heroImg = hEl ? hEl.value.trim() : tplEstado.heroImg;
-            const passIngresada = pEl ? pEl.value.trim() : '';
-            if (passIngresada) {
-                tplEstado.ownerPass = passIngresada;
-            } else if (!tplEstado.ownerPass) {
-                tplEstado.ownerPass = '1234';
-            }
-        }
-sincronizarFormularioPlantilla
-        function guardarBorradorPlasincronizarFormularioPlantillantilla(silent) {
-            sincronizarFormularioPlantilla();
-            localStorage.setItem('agora_plantillas_borrador', JSON.stringify(tplEstado));
-            if (!silent) {
-                alert('Borrador de plantilla guardado en Ágora.');
-            }
-        }
+function construirHtmlPlantillaVendible(cfg) {
+    const safeData = JSON.stringify({
+        modelo: cfg.modelo || 'catalogo',
+        negocio: cfg.negocio || 'Mi Negocio',
+        subtitulo: cfg.subtitulo || '',
+        whatsapp: (cfg.whatsapp || '').replace(/\D/g, ''),
+        heroImg: cfg.heroImg || '',
+        ownerPass: String(cfg.ownerPass || '1234'),
+        items: Array.isArray(cfg.items) ? cfg.items : []
+    }).replace(/</g, '\\u003c');
 
-        function construirHtmlPlantillaVendible(cfg) {
-            const safeData = JSON.stringify({
-                modelo: cfg.modelo || 'catalogo',
-                negocio: cfg.negocio || 'Mi Negocio',
-                subtitulo: cfg.subtitulo || '',
-                whatsapp: (cfg.whatsapp || '').replace(/\D/g, ''),
-                heroImg: cfg.heroImg || '',
-                ownerPass: String(cfg.ownerPass || '1234'),
-                items: Array.isArray(cfg.items) ? cfg.items : []
-            }).replace(/</g, '\\u003c');
-
-            return `<!DOCTYPE html>
+    return `<!DOCTYPE html>
 <html lang="es">
 <head>
 <meta charset="UTF-8">
@@ -1990,19 +1796,13 @@ sincronizarFormularioPlantilla
   <div class="brand" id="view-brand"></div>
   <button class="gear-btn" onclick="abrirPanelDueno()" title="Administrar">⚙️</button>
 </header>
-
 <section class="hero">
   <div id="view-hero-img"></div>
   <h1 id="view-title" style="font-size:20px;"></h1>
   <p id="view-sub"></p>
 </section>
-
-<div class="container">
-  <div class="grid" id="view-items"></div>
-</div>
-
+<div class="container"><div class="grid" id="view-items"></div></div>
 <div class="cart-bar" id="view-footer-bar"></div>
-
 <div id="owner-modal">
   <div class="modal-box">
     <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:10px;">
@@ -2020,38 +1820,24 @@ sincronizarFormularioPlantilla
     </div>
   </div>
 </div>
-
 <script>
 const BASE_CFG = ${safeData};
 const STORAGE_KEY = 'tpl_store_' + btoa(unescape(encodeURIComponent(BASE_CFG.negocio + '_' + BASE_CFG.modelo))).slice(0, 24);
-let state = JSON.parse(localStorage.getItem(STORAGE_KEY) || 'null') || {
-  items: BASE_CFG.items.slice(),
-  cart: {}
-};
+let state = JSON.parse(localStorage.getItem(STORAGE_KEY) || 'null') || { items: BASE_CFG.items.slice(), cart: {} };
 const FIXED_OWNER_PASS = BASE_CFG.ownerPass;
-
-function saveState() {
-  localStorage.setItem(STORAGE_KEY, JSON.stringify(state));
-}
-
-function esc(s) {
-  return String(s || '').replace(/[&<>'"]/g, c => ({ '&':'&amp;','<':'&lt;','>':'&gt;',"'":'&#39;','"':'&quot;' }[c]));
-}
-
+function saveState() { localStorage.setItem(STORAGE_KEY, JSON.stringify(state)); }
+function esc(s) { return String(s || '').replace(/[&<>'"]/g, c => ({ '&':'&amp;','<':'&lt;','>':'&gt;',"'":'&#39;','"':'&quot;' }[c])); }
 function renderApp() {
   document.getElementById('view-brand').textContent = BASE_CFG.negocio;
   document.getElementById('view-title').textContent = BASE_CFG.negocio;
   document.getElementById('view-sub').textContent = BASE_CFG.subtitulo;
   document.getElementById('view-hero-img').innerHTML = BASE_CFG.heroImg ? '<img src="' + esc(BASE_CFG.heroImg) + '" alt="Banner">' : '';
-
   const grid = document.getElementById('view-items');
   grid.innerHTML = '';
-
   state.items.forEach((it, idx) => {
     const card = document.createElement('div');
     card.className = 'card';
     const precioTexto = it.price && it.price !== '0' ? '$' + esc(it.price) : '';
-
     let accionHtml = '';
     if (BASE_CFG.modelo === 'catalogo' || BASE_CFG.modelo === 'carta') {
       accionHtml = '<button class="btn" onclick="sumarCarrito(' + idx + ')">+ Agregar</button>';
@@ -2064,19 +1850,14 @@ function renderApp() {
       const href = BASE_CFG.whatsapp ? ('https://wa.me/' + BASE_CFG.whatsapp + '?text=' + msg) : '#';
       accionHtml = '<a class="btn" target="_blank" href="' + href + '">Contactar</a>';
     }
-
-    card.innerHTML =
-      (it.img ? '<img src="' + esc(it.img) + '" alt="' + esc(it.title) + '">' : '') +
+    card.innerHTML = (it.img ? '<img src="' + esc(it.img) + '" alt="' + esc(it.title) + '">' : '') +
       '<div style="font-weight:700; font-size:14px;">' + esc(it.title) + '</div>' +
       (precioTexto ? '<div class="price">' + precioTexto + '</div>' : '') +
-      (it.desc ? '<div class="desc">' + esc(it.desc) + '</div>' : '') +
-      accionHtml;
+      (it.desc ? '<div class="desc">' + esc(it.desc) + '</div>' : '') + accionHtml;
     grid.appendChild(card);
   });
-
   renderFooterBar();
 }
-
 function sumarCarrito(idx) {
   const item = state.items[idx];
   if (!item) return;
@@ -2085,7 +1866,6 @@ function sumarCarrito(idx) {
   saveState();
   renderFooterBar();
 }
-
 function enviarPedidoWhatsApp() {
   const lineas = [];
   let total = 0;
@@ -2098,135 +1878,145 @@ function enviarPedidoWhatsApp() {
       lineas.push('• ' + cant + 'x ' + it.title + (p ? ' ($' + (p * cant) + ')' : ''));
     }
   });
-  if (lineas.length === 0) {
-    alert('Agregá al menos un ítem primero.');
-    return;
-  }
+  if (lineas.length === 0) return alert('Agregá al menos un ítem primero.');
   const texto = 'Hola ' + BASE_CFG.negocio + ', quiero hacer este pedido:\n' + lineas.join('\n') + (total > 0 ? '\nTotal: $' + total : '');
   const url = BASE_CFG.whatsapp ? ('https://wa.me/' + BASE_CFG.whatsapp + '?text=' + encodeURIComponent(texto)) : '';
-  if (url) window.open(url, '_blank');
-  else alert(texto);
+  if (url) window.open(url, '_blank'); else alert(texto);
 }
-
 function renderFooterBar() {
   const bar = document.getElementById('view-footer-bar');
   if (BASE_CFG.modelo === 'catalogo' || BASE_CFG.modelo === 'carta') {
-    let totalItems = 0;
-    let totalMonto = 0;
+    let totalItems = 0, totalMonto = 0;
     state.items.forEach((it, idx) => {
       const key = it.id || String(idx);
       const cant = state.cart[key] || 0;
       const p = Number(String(it.price || '0').replace(/[^0-9.]/g, '')) || 0;
-      totalItems += cant;
-      totalMonto += p * cant;
+      totalItems += cant; totalMonto += p * cant;
     });
-    bar.innerHTML =
-      '<div style="font-size:13px;">Ítems: <b>' + totalItems + '</b>' + (totalMonto > 0 ? ' · Total: <b style="color:#10b981;">$' + totalMonto + '</b>' : '') + '</div>' +
-      '<button class="btn" onclick="enviarPedidoWhatsApp()">Enviar por WhatsApp</button>';
+    bar.innerHTML = '<div style="font-size:13px;">Ítems: <b>' + totalItems + '</b>' + (totalMonto > 0 ? ' · Total: <b style="color:#10b981;">$' + totalMonto + '</b>' : '') + '</div><button class="btn" onclick="enviarPedidoWhatsApp()">Enviar por WhatsApp</button>';
   } else {
     const msg = encodeURIComponent('Hola ' + BASE_CFG.negocio + ', quisiera más información.');
     const href = BASE_CFG.whatsapp ? ('https://wa.me/' + BASE_CFG.whatsapp + '?text=' + msg) : '#';
-    bar.innerHTML =
-      '<div style="font-size:12px; color:#9ca3af;">' + esc(BASE_CFG.negocio) + '</div>' +
-      '<a class="btn" target="_blank" href="' + href + '">WhatsApp Directo</a>';
+    bar.innerHTML = '<div style="font-size:12px; color:#9ca3af;">' + esc(BASE_CFG.negocio) + '</div><a class="btn" target="_blank" href="' + href + '">WhatsApp Directo</a>';
   }
 }
-
 function abrirPanelDueno() {
   const clave = prompt('Ingresá la contraseña del dueño:');
   if (clave === null) return;
-  if (String(clave) !== String(FIXED_OWNER_PASS)) {
-    alert('Contraseña incorrecta.');
-    return;
-  }
+  if (String(clave) !== String(FIXED_OWNER_PASS)) return alert('Contraseña incorrecta.');
   document.getElementById('owner-modal').style.display = 'block';
   renderEditorDueno();
 }
-
-function cerrarPanelDueno() {
-  document.getElementById('owner-modal').style.display = 'none';
-}
-
+function cerrarPanelDueno() { document.getElementById('owner-modal').style.display = 'none'; }
 function renderEditorDueno() {
   const wrap = document.getElementById('owner-items-editor');
   wrap.innerHTML = '';
   state.items.forEach((it, idx) => {
     const div = document.createElement('div');
     div.className = 'edit-row';
-    div.innerHTML =
-      '<div style="font-weight:700; margin-bottom:6px;">' + esc(it.title) + '</div>' +
-      '<input type="text" value="' + esc(it.price || '') + '" placeholder="Precio" onchange="actualizarPrecioDueno(' + idx + ', this.value)">' +
-      '<button class="btn" style="background:#ef4444; color:#fff; width:100%;" onclick="quitarItemDueno(' + idx + ')">Quitar ítem</button>';
+    div.innerHTML = '<div style="font-weight:700; margin-bottom:6px;">' + esc(it.title) + '</div><input type="text" value="' + esc(it.price || '') + '" placeholder="Precio" onchange="actualizarPrecioDueno(' + idx + ', this.value)"><button class="btn" style="background:#ef4444; color:#fff; width:100%;" onclick="quitarItemDueno(' + idx + ')">Quitar ítem</button>';
     wrap.appendChild(div);
   });
 }
-
-function actualizarPrecioDueno(idx, nuevoPrecio) {
-  if (!state.items[idx]) return;
-  state.items[idx].price = String(nuevoPrecio).trim();
-  saveState();
-  renderApp();
-}
-
-function quitarItemDueno(idx) {
-  state.items.splice(idx, 1);
-  saveState();
-  renderEditorDueno();
-  renderApp();
-}
-
+function actualizarPrecioDueno(idx, nuevoPrecio) { if (!state.items[idx]) return; state.items[idx].price = String(nuevoPrecio).trim(); saveState(); renderApp(); }
+function quitarItemDueno(idx) { state.items.splice(idx, 1); saveState(); renderEditorDueno(); renderApp(); }
 function agregarItemDueno() {
-  const tEl = document.getElementById('new-item-title');
-  const pEl = document.getElementById('new-item-price');
-  const dEl = document.getElementById('new-item-desc');
+  const tEl = document.getElementById('new-item-title'), pEl = document.getElementById('new-item-price'), dEl = document.getElementById('new-item-desc');
   const title = tEl ? tEl.value.trim() : '';
-  if (!title) {
-    alert('Ingresá un nombre para el ítem.');
-    return;
-  }
-  state.items.push({
-    id: 'owner_' + Date.now(),
-    title: title,
-    price: pEl ? pEl.value.trim() : '0',
-    desc: dEl ? dEl.value.trim() : '',
-    img: ''
-  });
-  if (tEl) tEl.value = '';
-  if (pEl) pEl.value = '';
-  if (dEl) dEl.value = '';
-  saveState();
-  renderEditorDueno();
-  renderApp();
+  if (!title) return alert('Ingresá un nombre para el ítem.');
+  state.items.push({ id: 'owner_' + Date.now(), title, price: pEl ? pEl.value.trim() : '0', desc: dEl ? dEl.value.trim() : '', img: '' });
+  if (tEl) tEl.value = ''; if (pEl) pEl.value = ''; if (dEl) dEl.value = '';
+  saveState(); renderEditorDueno(); renderApp();
 }
-
 renderApp();
 <\/script>
 </body>
 </html>`;
-        }
+}
 
-        function generarPlantillaEnEditor(abrirVistaPrevia) {
-            sincronizarFormularioPlantilla();
-            if (!tplEstado.negocio) {
-                tplEstado.negocio = 'Mi Proyecto Ágora';
-            }
-            guardarBorradorPlantilla(true);
-            const htmlGenerado = construirHtmlPlantillaVendible(tplEstado);
-            if (editor) {
-                editor.value = htmlGenerado;
-                localStorage.setItem('agora_codigo_app', editor.value);
-            }
-            if (abrirVistaPrevia) {
-                const blob = new Blob([htmlGenerado], { type: 'text/html;charset=utf-8' });
-                window.open(URL.createObjectURL(blob), '_blank');
-            } else {
-                alert('¡Plantilla cargada en el editor lista para guardar o subir!');
-            }
-        }
+function generarPlantillaEnEditor(abrirVistaPrevia) {
+    sincronizarFormularioPlantilla();
+    if (!tplEstado.negocio) tplEstado.negocio = 'Mi Proyecto Ágora';
+    guardarBorradorPlantilla(true);
+    const htmlGenerado = construirHtmlPlantillaVendible(tplEstado);
+    if (editor) {
+        editor.value = htmlGenerado;
+        localStorage.setItem('agora_codigo_app', editor.value);
+        syncColeccionFirestore('agora_secciones', 'editor_codigo', { codigo: editor.value });
+    }
+    if (abrirVistaPrevia) {
+        const blob = new Blob([htmlGenerado], { type: 'text/html;charset=utf-8' });
+        window.open(URL.createObjectURL(blob), '_blank');
+    } else {
+        alert('¡Plantilla cargada en el editor lista para guardar o subir!');
+    }
+}
 
-        function escapeHTML(str) {
-            return str.replace(/[&<>'"]/g, tag => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', "'": '&#39;', '"': '&quot;' }[tag] || tag));
+function iniciarListenersFirestoreAgora() {
+    escucharDocFirestore('agora_secciones', 'editor_codigo', (data) => {
+        if (typeof data.codigo === 'string' && editor && editor.value !== data.codigo) {
+            editor.value = data.codigo;
+            localStorage.setItem('agora_codigo_app', data.codigo);
         }
-    </script>
+    });
+    escucharDocFirestore('agora_secciones', 'media_files', (data) => {
+        if (Array.isArray(data.items)) {
+            localStorage.setItem('agora_media_files', JSON.stringify(data.items));
+            cargarGaleriaLocal();
+        }
+    });
+    escucharDocFirestore('agora_secciones', 'saas_proyectos', (data) => {
+        if (Array.isArray(data.items)) {
+            localStorage.setItem('agora_saas_proyectos', JSON.stringify(data.items));
+            renderSaasClients();
+        }
+    });
+    escucharDocFirestore('agora_secciones', 'carpetas_celular', (data) => {
+        if (data.carpetas && typeof data.carpetas === 'object') {
+            localStorage.setItem('agora_carpetas_celular', JSON.stringify(data.carpetas));
+            renderCarpetasCelular();
+        }
+    });
+    escucharDocFirestore('agora_secciones', 'plantillas_borrador', (data) => {
+        if (data.borrador && typeof data.borrador === 'object') {
+            localStorage.setItem('agora_plantillas_borrador', JSON.stringify(data.borrador));
+            cargarEstadoPlantillas();
+        }
+    });
+    escucharDocFirestore('agora_secciones', 'ajustes', (data) => {
+        if (data.fontSize && !isNaN(data.fontSize)) {
+            localStorage.setItem('agora_font_size', String(data.fontSize));
+            document.documentElement.style.setProperty('--font-size', String(data.fontSize) + 'px');
+        }
+    });
+    escucharDocFirestore('agora_secciones', 'config_deploy', (data) => {
+        if (typeof data.gh_repo === 'string') localStorage.setItem('gh_repo', data.gh_repo);
+        if (typeof data.gh_token === 'string') localStorage.setItem('gh_token', data.gh_token);
+        if (typeof data.firebase_url === 'string') localStorage.setItem('firebase_url', data.firebase_url);
+    });
+    escucharDocFirestore('agora_secciones', 'ultimo_link', (data) => {
+        if (data.url) {
+            localStorage.setItem('agora_ultimo_link', data.url);
+            mostrarPanelLink(data.url);
+        }
+    });
+}
+
+window.addEventListener('DOMContentLoaded', () => {
+    const savedFont = localStorage.getItem('agora_font_size');
+    if (savedFont && !isNaN(savedFont)) {
+        document.documentElement.style.setProperty('--font-size', savedFont + 'px');
+    }
+    const savedCode = localStorage.getItem('agora_codigo_app');
+    if (savedCode && editor) {
+        editor.value = savedCode;
+    }
+    cargarGaleriaLocal();
+    renderCarpetasCelular();
+    renderSaasClients();
+    cargarEstadoPlantillas();
+    iniciarListenersFirestoreAgora();
+});
+</script>
 </body>
 </html>
