@@ -4,22 +4,22 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
     <title>Ágora</title>
-    <!-- Configuración de íconos PWA y Android (APK) -->
+    <!-- Configuración PWA y Android -->
     <link rel="icon" type="image/png" href="icon512.png">
     <link rel="apple-touch-icon" href="icon512.png">
     <link rel="manifest" href="manifest.json">
     <meta name="theme-color" content="#121212">
     <style>
         :root {
-            --bg-color: #121212;        /* Gris grafito profundo anti-deslumbramiento */
-            --panel-bg: #1e1e1e;        /* Gris plomo sutil para superficies */
-            --editor-bg: #181818;       /* Fondo suave para escritura prolongada */
-            --accent-color: #10b981;    /* Verde esmeralda calmante y profesional */
+            --bg-color: #121212;
+            --panel-bg: #1e1e1e;
+            --editor-bg: #181818;
+            --accent-color: #10b981;
             --accent-hover: #059669;
-            --text-color: #e0e0e0;      /* Gris perla suave */
+            --text-color: #e0e0e0;
             --text-muted: #9ca3af;
             --border-color: #2d2d2d;
-            --font-size: 13px;          /* Tamaño de fuente ajustable */
+            --font-size: 13px;
         }
         * {
             box-sizing: border-box;
@@ -35,9 +35,8 @@
             height: 100%;
             width: 100%;
             overflow: hidden;
-            position: fixed; /* Previene el rebote nativo del navegador en móvil */
+            position: fixed;
         }
-        /* Bloque 1: Barra Superior de Links */
         header {
             background: var(--panel-bg);
             border-bottom: 1px solid var(--border-color);
@@ -84,8 +83,6 @@
             font-weight: 600;
             touch-action: manipulation;
         }
-        
-        /* Contenedor Principal */
         main {
             flex: 1;
             display: flex;
@@ -95,8 +92,6 @@
             width: 100%;
             height: calc(100% - 50px);
         }
-
-        /* Bloque 2: Editor */
         .workspace {
             flex: 1;
             display: flex;
@@ -136,8 +131,6 @@
         .toolbar button:active {
             background: var(--accent-hover);
         }
-
-        /* Mini Barra de Herramientas SPK */
         .editor-tools {
             background: #181818;
             padding: 6px 12px;
@@ -163,7 +156,6 @@
             background: var(--accent-color);
             color: #121212;
         }
-
         .editor-container {
             flex: 1;
             display: flex;
@@ -173,7 +165,6 @@
             -webkit-overflow-scrolling: touch;
             background: var(--editor-bg);
         }
-
         #code-editor {
             width: 100%;
             height: 100%;
@@ -191,8 +182,6 @@
             white-space: pre;
             overflow-x: auto;
         }
-
-        /* Panel de Link Generado */
         #deploy-info {
             background: #17252a;
             border-top: 1px solid #2b6cb0;
@@ -209,10 +198,6 @@
             text-decoration: underline;
             word-break: break-all;
         }
-        .deploy-actions {
-            display: flex;
-            gap: 6px;
-        }
         .deploy-actions button {
             background: #059669;
             color: #fff;
@@ -223,8 +208,6 @@
             cursor: pointer;
             touch-action: manipulation;
         }
-
-        /* Paneles Laterales Deslizables */
         .side-panel {
             position: absolute;
             top: 0;
@@ -263,8 +246,6 @@
             line-height: 1;
             touch-action: manipulation;
         }
-
-        /* Contenido de Paneles */
         .panel-body {
             flex: 1;
             padding: 14px;
@@ -285,8 +266,6 @@
             color: var(--accent-color);
             margin-bottom: 8px;
         }
-
-        /* IA Chat Box + Voz */
         .ai-chat-box {
             flex: 1;
             padding: 12px;
@@ -386,9 +365,8 @@
             font-size: 12px;
             touch-action: manipulation;
         }
-
-        /* Estilos Media Manager y Conversor */
         .custom-file-upload {
+            display: block;
             background: #252525;
             color: var(--text-color);
             border: 1px dashed var(--accent-color);
@@ -399,10 +377,7 @@
             font-size: 12px;
             font-weight: 600;
         }
-        .custom-file-upload:active {
-            background: #333;
-        }
-        #file-input-hidden {
+        .custom-file-upload input[type="file"] {
             display: none;
         }
         .gallery-grid {
@@ -469,8 +444,6 @@
             font-weight: 600;
             cursor: pointer;
         }
-
-        /* SaaS Dashboard Styles */
         .client-card {
             background: #252525;
             border: 1px solid var(--border-color);
@@ -499,8 +472,6 @@
             font-weight: 600;
             cursor: pointer;
         }
-
-        /* Estilos Sección Plantillas Profesionales */
         .tpl-grid {
             display: grid;
             grid-template-columns: 1fr 1fr;
@@ -570,8 +541,6 @@
             font-weight: 600;
             cursor: pointer;
         }
-
-        /* Botones Flotantes */
         .floating-buttons {
             position: fixed;
             bottom: 20px;
@@ -603,8 +572,6 @@
     </style>
 </head>
 <body>
-
-    <!-- BLOQUE 1: BARRA DE ACCESOS DIRECTOS -->
     <header>
         <span class="brand-tag">ÁGORA</span>
         <button class="config-btn" onclick="configurarGithub()">⚙️ GitHub Config</button>
@@ -621,7 +588,6 @@
     </header>
 
     <main>
-        <!-- BLOQUE 2: EDITOR Y HERRAMIENTAS SPK -->
         <div class="workspace">
             <div class="toolbar">
                 <div class="toolbar-group">
@@ -635,7 +601,6 @@
                 </div>
             </div>
 
-            <!-- BARRA DE EDICIÓN RÁPIDA ESTILO SPK -->
             <div class="editor-tools">
                 <button onclick="toolSeleccionarTodo()">📄 Seleccionar Todo</button>
                 <button onclick="toolCopiar()">📋 Copiar</button>
@@ -644,19 +609,19 @@
                 <button onclick="toolLimpiarTodo()" style="color:#f87171;">⚠️ Limpiar Todo</button>
                 <button onclick="toolInsertarEstructura()">⚡ Plantilla HTML</button>
             </div>
-            
+
             <div class="editor-container">
                 <textarea id="code-editor" placeholder="Escribí o pegá tu código HTML/JS acá...">&lt;!DOCTYPE html&gt;
 &lt;html&gt;
 &lt;head&gt;
-&lt;style&gt; 
-  body { 
-    background: #121212; 
-    color: #e0e0e0; 
-    text-align: center; 
-    padding-top: 60px; 
-    font-family: sans-serif; 
-  } 
+&lt;style&gt;
+  body {
+    background: #121212;
+    color: #e0e0e0;
+    text-align: center;
+    padding-top: 60px;
+    font-family: sans-serif;
+  }
   h1 { color: #10b981; }
 &lt;/style&gt;
 &lt;/head&gt;
@@ -666,8 +631,6 @@
 &lt;/body&gt;
 &lt;/html&gt;</textarea>
             </div>
-
-            <!-- Panel de Link Generado Automáticamente -->
             <div id="deploy-info">
                 <div>🌐 <b>Web Online:</b> <a id="deploy-link" href="#" target="_blank"></a></div>
                 <div class="deploy-actions">
@@ -676,7 +639,6 @@
             </div>
         </div>
 
-        <!-- PANEL LATERAL: GESTOR DE ARCHIVOS, CARPETAS CELULAR Y CONVERSOR -->
         <div id="media-panel" class="side-panel">
             <div class="panel-header">
                 <span>📁 Gestor de Archivos & Conversor</span>
@@ -725,7 +687,7 @@
                 </div>
             </div>
         </div>
-        <!-- PANEL LATERAL: SAAS DASHBOARD DE CLIENTES Y LICENCIAS -->
+
         <div id="saas-panel" class="side-panel">
             <div class="panel-header">
                 <span>📊 Panel de Clientes y Licencias</span>
@@ -743,7 +705,6 @@
             </div>
         </div>
 
-        <!-- PANEL LATERAL: PLANTILLAS PROFESIONALES (4 MODELOS + CONTRASEÑA FIJA) -->
         <div id="templates-panel" class="side-panel">
             <div class="panel-header">
                 <span>🧩 Plantillas Profesionales</span>
@@ -856,19 +817,15 @@
         </div>
     </main>
 
-    <!-- BOTONES FLOTANTES -->
     <div class="floating-buttons">
         <button class="float-btn" onclick="togglePanel('media-panel')" title="Gestor">📁</button>
         <button class="float-btn" onclick="togglePanel('saas-panel')" title="SaaS Panel" style="background:#f59e0b; color:#111;">📊</button>
         <button class="float-btn" onclick="togglePanel('templates-panel')" title="Plantillas Profesionales" style="background:#7c3aed; color:#fff;">🧩</button>
         <button class="float-btn" onclick="togglePanel('ai-panel')" title="Asistente IA">✦</button>
     </div>
-
-<script>
-// CONFIGURACIÓN ÚNICA DE GEMINI PARA EL ASISTENTE ÁGORA
+    <script>
 const GEMINI_API_KEY = '';
 const GEMINI_MODEL = 'gemini-3.8-flash';
-const GEMINI_API_URL = `https://generativelanguage.googleapis.com/v1beta/models/${GEMINI_MODEL}:generateContent`;
 
 function obtenerClaveGeminiActiva() {
     if (GEMINI_API_KEY && GEMINI_API_KEY.trim()) return GEMINI_API_KEY.trim();
@@ -884,12 +841,8 @@ function obtenerClaveGeminiActiva() {
 }
 
 function resolverFirestoreDb() {
-    if (typeof db !== 'undefined' && db && typeof db.collection === 'function') {
-        return db;
-    }
-    if (window.db && typeof window.db.collection === 'function') {
-        return window.db;
-    }
+    if (typeof db !== 'undefined' && db && typeof db.collection === 'function') return db;
+    if (window.db && typeof window.db.collection === 'function') return window.db;
     if (window.firebase && typeof window.firebase.firestore === 'function' && window.firebase.apps && window.firebase.apps.length) {
         try {
             window.db = window.firebase.firestore();
@@ -914,9 +867,7 @@ function escucharDocFirestore(coleccionNombre, docId, onDataCallback) {
     if (!firestore || typeof onDataCallback !== 'function') return;
     try {
         firestore.collection(coleccionNombre).doc(docId).onSnapshot((doc) => {
-            if (doc && doc.exists) {
-                onDataCallback(doc.data() || {});
-            }
+            if (doc && doc.exists) onDataCallback(doc.data() || {});
         });
     } catch (_) {}
 }
@@ -927,23 +878,16 @@ function escapeHTML(str) {
     }[tag] || tag));
 }
 
-function escapeHTMLSafe(str) {
-    return escapeHTML(str);
-}
-
-// GESTIÓN DE PANELES LATERALES
 function togglePanel(panelId) {
     ['media-panel', 'saas-panel', 'templates-panel', 'ai-panel'].forEach(id => {
         const p = document.getElementById(id);
         if (!p) return;
-        if (id === panelId) {
-            p.classList.toggle('open');
-        } else {
-            p.classList.remove('open');
-        }
+        if (id === panelId) p.classList.toggle('open');
+        else p.classList.remove('open');
     });
 }
-// CARPETAS EN EL CELULAR (ALMACENAMIENTO LOCAL + FIRESTORE)
+
+// CARPETAS EN EL CELULAR
 function getCarpetasCelular() {
     try { return JSON.parse(localStorage.getItem('agora_carpetas_celular') || '{}'); }
     catch (_) { return {}; }
@@ -1002,19 +946,16 @@ function renderCarpetasCelular() {
     if (!box) return;
     const carpetas = getCarpetasCelular();
     const nombresCarpetas = Object.keys(carpetas);
-
     if (!nombresCarpetas.length) {
         box.innerHTML = `<div style="font-size:11px; color:var(--text-muted);">Sin carpetas creadas todavía.</div>`;
         return;
     }
-
     box.innerHTML = '';
     nombresCarpetas.forEach(carpeta => {
         const archivos = Object.keys(carpetas[carpeta] || {});
         const wrap = document.createElement('div');
         wrap.style.cssText = 'background:#252525; border:1px solid var(--border-color); border-radius:6px; padding:8px; margin-bottom:8px;';
-
-        let itemsHtml = archivos.length
+        const itemsHtml = archivos.length
             ? archivos.map(arq => `
                 <div style="display:flex; justify-content:space-between; align-items:center; gap:6px; margin-top:5px; font-size:11px;">
                     <span style="word-break:break-all;">📄 ${escapeHTML(arq)}</span>
@@ -1025,7 +966,6 @@ function renderCarpetasCelular() {
                 </div>
             `).join('')
             : `<div style="font-size:10px; color:var(--text-muted); margin-top:4px;">Carpeta vacía</div>`;
-
         wrap.innerHTML = `
             <div style="display:flex; justify-content:space-between; align-items:center; gap:6px;">
                 <b style="font-size:12px; color:#6ee7b7;">📁 ${escapeHTML(carpeta)}</b>
@@ -1037,19 +977,17 @@ function renderCarpetasCelular() {
     });
 }
 
-// GESTOR DE ARCHIVOS Y GALERÍA (LIBRE)
+// GESTOR DE ARCHIVOS Y CONVERSOR
 let imagenParaConvertirData = null;
 let nombreImagenOriginal = 'icono';
 
 function procesarArchivoSubido(event) {
     const file = event.target.files[0];
     if (!file) return;
-
     const reader = new FileReader();
     reader.onload = function(e) {
-        const base64Data = e.target.result;
-        let archivos = JSON.parse(localStorage.getItem('agora_media_files') || '[]');
-        archivos.push({ name: file.name, data: base64Data });
+        const archivos = JSON.parse(localStorage.getItem('agora_media_files') || '[]');
+        archivos.push({ name: file.name, data: e.target.result });
         localStorage.setItem('agora_media_files', JSON.stringify(archivos));
         syncColeccionFirestore('agora_secciones', 'media_files', { items: archivos });
         cargarGaleriaLocal();
@@ -1061,19 +999,17 @@ function procesarArchivoSubido(event) {
 function cargarGaleriaLocal() {
     const container = document.getElementById('gallery-container');
     if (!container) return;
-    let archivos = JSON.parse(localStorage.getItem('agora_media_files') || '[]');
-
+    const archivos = JSON.parse(localStorage.getItem('agora_media_files') || '[]');
     if (archivos.length === 0) {
         container.innerHTML = `<div style="font-size: 11px; color: var(--text-muted); grid-column: span 2;">No hay archivos cargados.</div>`;
         return;
     }
-
     container.innerHTML = '';
     archivos.forEach((file, index) => {
         const item = document.createElement('div');
         item.className = 'gallery-item';
         item.innerHTML = `
-            <img src="${file.data}" alt="${file.name}">
+            <img src="${file.data}" alt="${escapeHTML(file.name)}">
             <button onclick="copiarRutaArchivo(${index})">📋 Copiar Link</button>
             <button onclick="eliminarArchivo(${index})" style="background:#ef4444; color:#fff; margin-top:2px;">🗑️ Borrar</button>
         `;
@@ -1082,28 +1018,24 @@ function cargarGaleriaLocal() {
 }
 
 function copiarRutaArchivo(index) {
-    let archivos = JSON.parse(localStorage.getItem('agora_media_files') || '[]');
+    const archivos = JSON.parse(localStorage.getItem('agora_media_files') || '[]');
     if (archivos[index]) {
-        navigator.clipboard.writeText(archivos[index].data).then(() => {
-            alert('¡Enlace copiado al portapapeles!');
-        });
+        navigator.clipboard.writeText(archivos[index].data).then(() => alert('¡Enlace copiado al portapapeles!'));
     }
 }
 
 function eliminarArchivo(index) {
-    let archivos = JSON.parse(localStorage.getItem('agora_media_files') || '[]');
+    const archivos = JSON.parse(localStorage.getItem('agora_media_files') || '[]');
     archivos.splice(index, 1);
     localStorage.setItem('agora_media_files', JSON.stringify(archivos));
     syncColeccionFirestore('agora_secciones', 'media_files', { items: archivos });
     cargarGaleriaLocal();
 }
 
-// CONVERSOR DE ÍCONOS
 function cargarImagenParaConvertir(event) {
     const file = event.target.files[0];
     if (!file) return;
     nombreImagenOriginal = file.name.substring(0, file.name.lastIndexOf('.')) || 'icono';
-
     const reader = new FileReader();
     reader.onload = function(e) {
         imagenParaConvertirData = e.target.result;
@@ -1116,34 +1048,29 @@ function cargarImagenParaConvertir(event) {
 
 function descargarIcono(size) {
     if (!imagenParaConvertirData) return;
-
     const img = new Image();
     img.onload = function() {
         const canvas = document.createElement('canvas');
         canvas.width = size;
         canvas.height = size;
-        const ctx = canvas.getContext('2d');
-        ctx.drawImage(img, 0, 0, size, size);
-
-        const dataURL = canvas.toDataURL('image/png');
+        canvas.getContext('2d').drawImage(img, 0, 0, size, size);
         const link = document.createElement('a');
         link.download = `${nombreImagenOriginal}_${size}x${size}.png`;
-        link.href = dataURL;
+        link.href = canvas.toDataURL('image/png');
         link.click();
         alert(`¡Ícono de ${size}x${size} descargado con éxito!`);
     };
     img.src = imagenParaConvertirData;
 }
 
-// PANEL SAAS / CUADRO DE PROYECTOS (PAUSAR / BLOQUEAR / QUITAR)
+// PANEL SAAS DE PROYECTOS (PAUSAR / BLOQUEAR / QUITAR)
 function agregarNuevoProyectoSaas() {
-    let nombre = prompt("Nombre del proyecto o cliente:");
+    const nombre = prompt("Nombre del proyecto o cliente:");
     if (!nombre) return;
-    let linkProyecto = prompt("URL del proyecto (ej: https://usuario.github.io/repo/):", localStorage.getItem('agora_ultimo_link') || '');
-    let proyectos = JSON.parse(localStorage.getItem('agora_saas_proyectos') || '[]');
-    let vencimiento = new Date();
+    const linkProyecto = prompt("URL del proyecto (ej: https://usuario.github.io/repo/):", localStorage.getItem('agora_ultimo_link') || '');
+    const proyectos = JSON.parse(localStorage.getItem('agora_saas_proyectos') || '[]');
+    const vencimiento = new Date();
     vencimiento.setDate(vencimiento.getDate() + 30);
-
     proyectos.push({
         nombre: nombre,
         link: linkProyecto || '#',
@@ -1157,7 +1084,7 @@ function agregarNuevoProyectoSaas() {
 }
 
 function cambiarEstadoProyecto(index, nuevoEstado) {
-    let proyectos = JSON.parse(localStorage.getItem('agora_saas_proyectos') || '[]');
+    const proyectos = JSON.parse(localStorage.getItem('agora_saas_proyectos') || '[]');
     if (!proyectos[index]) return;
     proyectos[index].estado = nuevoEstado;
     localStorage.setItem('agora_saas_proyectos', JSON.stringify(proyectos));
@@ -1166,7 +1093,7 @@ function cambiarEstadoProyecto(index, nuevoEstado) {
 }
 
 function quitarProyecto(index) {
-    let proyectos = JSON.parse(localStorage.getItem('agora_saas_proyectos') || '[]');
+    const proyectos = JSON.parse(localStorage.getItem('agora_saas_proyectos') || '[]');
     if (!proyectos[index]) return;
     if (!confirm(`¿Quitar "${proyectos[index].nombre}" del cuadro?`)) return;
     proyectos.splice(index, 1);
@@ -1178,20 +1105,18 @@ function quitarProyecto(index) {
 function renderSaasClients() {
     const container = document.getElementById('saas-clients-list');
     if (!container) return;
-    let proyectos = JSON.parse(localStorage.getItem('agora_saas_proyectos') || '[]');
-
+    const proyectos = JSON.parse(localStorage.getItem('agora_saas_proyectos') || '[]');
     if (proyectos.length === 0) {
         container.innerHTML = `<div style="font-size: 11px; color: var(--text-muted);">No hay proyectos registrados.</div>`;
         return;
     }
-
     container.innerHTML = '';
     proyectos.forEach((p, index) => {
-        let v = new Date(p.vencimiento);
-        let vencido = new Date() > v;
+        const v = new Date(p.vencimiento);
+        const vencido = new Date() > v;
         const estadoActual = p.estado || 'activo';
         const colorEstado = estadoActual === 'activo' && !vencido ? '#10b981' : (estadoActual === 'pausado' ? '#f59e0b' : '#ef4444');
-        let card = document.createElement('div');
+        const card = document.createElement('div');
         card.className = 'client-card';
         card.innerHTML = `
             <div class="client-info">
@@ -1212,7 +1137,7 @@ function renderSaasClients() {
 }
 
 function renovarSaas(index) {
-    let proyectos = JSON.parse(localStorage.getItem('agora_saas_proyectos') || '[]');
+    const proyectos = JSON.parse(localStorage.getItem('agora_saas_proyectos') || '[]');
     let v = new Date(proyectos[index].vencimiento);
     if (new Date() > v) v = new Date();
     v.setDate(v.getDate() + 30);
@@ -1224,7 +1149,7 @@ function renovarSaas(index) {
     alert('¡Licencia renovada por 30 días más!');
 }
 
-// FUNCIONES DE EDICIÓN Y GESTIÓN DE CÓDIGO
+// EDITOR Y PRUEBA EN TIEMPO REAL
 const editor = document.getElementById('code-editor');
 let agoraPreviewUrl = '';
 let agoraLiveWin = null;
@@ -1305,10 +1230,7 @@ function toolBorrarSeleccion() {
     editor.focus();
     const start = editor.selectionStart;
     const end = editor.selectionEnd;
-    if (start === end) {
-        alert('Seleccioná el texto que querés borrar.');
-        return;
-    }
+    if (start === end) return alert('Seleccioná el texto que querés borrar.');
     editor.value = editor.value.substring(0, start) + editor.value.substring(end);
     editor.selectionStart = editor.selectionEnd = start;
     localStorage.setItem('agora_codigo_app', editor.value);
@@ -1326,15 +1248,15 @@ function toolLimpiarTodo() {
 
 function toolInsertarEstructura() {
     if (!editor) return;
-    editor.value = `<!DOCTYPE html>\n<html lang="es">\n<head>\n    <meta charset="UTF-8">\n    <meta name="viewport" content="width=device-width, initial-scale=1.0">\n    <title>App Cliente / Dashboard onSnapshot</title>\n    <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-app-compat.js"><\\/script>\n    <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-firestore-compat.js"><\\/script>\n    <style>\n        body { background: #121212; color: #fff; font-family: sans-serif; padding: 20px; text-align: center; }\n    </style>\n</head>\n<body>\n    <h1>Panel del Cliente (En tiempo real)</h1>\n    <div id="app-content">Cargando datos desde la nube...</div>\n</body>\n</html>`;
+    editor.value = `<!DOCTYPE html>\n<html lang="es">\n<head>\n    <meta charset="UTF-8">\n    <meta name="viewport" content="width=device-width, initial-scale=1.0">\n    <title>App Cliente / Dashboard onSnapshot</title>\n    <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-app-compat.js"><\/script>\n    <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-firestore-compat.js"><\/script>\n    <style>\n        body { background: #121212; color: #fff; font-family: sans-serif; padding: 20px; text-align: center; }\n    </style>\n</head>\n<body>\n    <h1>Panel del Cliente (En tiempo real)</h1>\n    <div id="app-content">Cargando datos desde la nube...</div>\n</body>\n</html>`;
     localStorage.setItem('agora_codigo_app', editor.value);
     syncColeccionFirestore('agora_secciones', 'editor_codigo', { codigo: editor.value });
     alert('Plantilla base insertada.');
 }
 
 function abrirAjustes() {
-    let fontActual = localStorage.getItem('agora_font_size') || '13';
-    let nuevaFuente = prompt("🎛️ PANEL DE AJUSTES\n\nTamaño de letra del editor en píxeles:", fontActual);
+    const fontActual = localStorage.getItem('agora_font_size') || '13';
+    const nuevaFuente = prompt("🎛️ PANEL DE AJUSTES\n\nTamaño de letra del editor en píxeles:", fontActual);
     if (nuevaFuente && !isNaN(nuevaFuente)) {
         localStorage.setItem('agora_font_size', nuevaFuente.trim());
         document.documentElement.style.setProperty('--font-size', nuevaFuente.trim() + 'px');
@@ -1344,9 +1266,9 @@ function abrirAjustes() {
 }
 
 function configurarGithub() {
-    let repo = prompt("Repositorio GitHub (usuario/repo):", localStorage.getItem('gh_repo') || '');
+    const repo = prompt("Repositorio GitHub (usuario/repo):", localStorage.getItem('gh_repo') || '');
     if (repo !== null) localStorage.setItem('gh_repo', repo.trim());
-    let token = prompt("Token Personal de GitHub:", localStorage.getItem('gh_token') || '');
+    const token = prompt("Token Personal de GitHub:", localStorage.getItem('gh_token') || '');
     if (token !== null) localStorage.setItem('gh_token', token.trim());
     syncColeccionFirestore('agora_secciones', 'config_deploy', {
         gh_repo: localStorage.getItem('gh_repo') || '',
@@ -1356,7 +1278,7 @@ function configurarGithub() {
 }
 
 function configurarFirebase() {
-    let url = prompt("URL de Firebase Hosting:", localStorage.getItem('firebase_url') || '');
+    const url = prompt("URL de Firebase Hosting:", localStorage.getItem('firebase_url') || '');
     if (url !== null) localStorage.setItem('firebase_url', url.trim());
     syncColeccionFirestore('agora_secciones', 'config_deploy', {
         gh_repo: localStorage.getItem('gh_repo') || '',
@@ -1384,13 +1306,11 @@ async function subirAGitHub() {
         return;
     }
     if (!confirm(`¿Subir a ${repo} (index.html)?`)) return;
-
     const url = `https://api.github.com/repos/${repo}/contents/index.html`;
     try {
         let sha = '';
         const getRes = await fetch(url, { headers: { 'Authorization': `token ${token}` } });
         if (getRes.ok) sha = (await getRes.json()).sha;
-
         const putRes = await fetch(url, {
             method: 'PUT',
             headers: { 'Authorization': `token ${token}`, 'Content-Type': 'application/json' },
@@ -1400,7 +1320,6 @@ async function subirAGitHub() {
                 sha: sha || undefined
             })
         });
-
         if (putRes.ok) {
             const [user, repoName] = repo.split('/');
             const linkWeb = `https://${user}.github.io/${repoName}/`;
@@ -1428,7 +1347,7 @@ function subirAFirebase() {
     alert('¡Enlace de Firebase activado!');
 }
 
-// ASISTENTE GEMINI (gemini-3.8-flash)
+// ASISTENTE Y VOZ ES-AR
 function handleKeyPress(e) {
     if (e && e.key === 'Enter' && !e.shiftKey) {
         e.preventDefault();
@@ -1441,16 +1360,15 @@ async function enviarMensajeIA() {
     if (!input) return;
     const texto = input.value.trim();
     if (!texto) return;
-
     const chatBox = document.getElementById('chat-messages');
     if (!chatBox) return;
 
-    chatBox.innerHTML += `<div class="msg user">${escapeHTMLSafe(texto)}</div>`;
+    chatBox.innerHTML += `<div class="msg user">${escapeHTML(texto)}</div>`;
     input.value = '';
     chatBox.scrollTop = chatBox.scrollHeight;
 
     const loadingId = 'loading-' + Date.now();
-    chatBox.innerHTML += `<div class="msg ai" id="${loadingId}">Procesando con Gemini (${escapeHTMLSafe(GEMINI_MODEL)})...</div>`;
+    chatBox.innerHTML += `<div class="msg ai" id="${loadingId}">Procesando con Gemini (${escapeHTML(GEMINI_MODEL)})...</div>`;
     chatBox.scrollTop = chatBox.scrollHeight;
 
     const apiKeyActiva = obtenerClaveGeminiActiva();
@@ -1463,61 +1381,33 @@ async function enviarMensajeIA() {
     }
 
     const endpoint = `https://generativelanguage.googleapis.com/v1beta/models/${encodeURIComponent(GEMINI_MODEL)}:generateContent?key=${encodeURIComponent(apiKeyActiva)}`;
-    const maxReintentos = 3;
-
     try {
-        let response = null;
-        let rawText = '';
+        const response = await fetch(endpoint, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ contents: [{ parts: [{ text: texto }] }] })
+        });
+        const rawText = await response.text();
         let data = {};
-
-        for (let intento = 1; intento <= maxReintentos; intento++) {
-            const loadingEl = document.getElementById(loadingId);
-            if (loadingEl) {
-                loadingEl.textContent = intento === 1
-                    ? `Procesando con Gemini (${GEMINI_MODEL})...`
-                    : `Servidor saturado (503). Reintentando (${intento}/${maxReintentos})...`;
-            }
-
-            response = await fetch(endpoint, {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({
-                    contents: [{ parts: [{ text: texto }] }]
-                })
-            });
-
-            rawText = await response.text();
-            try { data = rawText ? JSON.parse(rawText) : {}; } catch (_) { data = {}; }
-
-            if (response.status !== 503 || intento === maxReintentos) break;
-            await new Promise(resolve => setTimeout(resolve, 1500 * intento));
-        }
-
+        try { data = rawText ? JSON.parse(rawText) : {}; } catch (_) {}
         const loadingEl = document.getElementById(loadingId);
         if (loadingEl) loadingEl.remove();
 
         if (!response.ok) {
-            const detalleError = data?.error?.message || rawText || 'Error de respuesta de la API';
-            chatBox.innerHTML += `<div class="msg ai" style="color:#f87171;">Error HTTP ${response.status}: ${escapeHTMLSafe(detalleError)}</div>`;
-            chatBox.scrollTop = chatBox.scrollHeight;
-            return;
-        }
-
-        const respuestaIA = data?.candidates?.[0]?.content?.parts?.[0]?.text;
-        if (respuestaIA) {
-            chatBox.innerHTML += `<div class="msg ai">${escapeHTMLSafe(respuestaIA)}</div>`;
+            const detalle = data?.error?.message || rawText || 'Error de respuesta de la API';
+            chatBox.innerHTML += `<div class="msg ai" style="color:#f87171;">Error HTTP ${response.status}: ${escapeHTML(detalle)}</div>`;
         } else {
-            chatBox.innerHTML += `<div class="msg ai" style="color:#f87171;">La API respondió sin texto utilizable.</div>`;
+            const respuestaIA = data?.candidates?.[0]?.content?.parts?.[0]?.text || 'La API respondió sin texto utilizable.';
+            chatBox.innerHTML += `<div class="msg ai">${escapeHTML(respuestaIA)}</div>`;
         }
     } catch (error) {
         const loadingEl = document.getElementById(loadingId);
         if (loadingEl) loadingEl.remove();
-        chatBox.innerHTML += `<div class="msg ai" style="color:#f87171;">Error de conexión o red al consultar Gemini: ${escapeHTMLSafe(error?.message || String(error))}</div>`;
+        chatBox.innerHTML += `<div class="msg ai" style="color:#f87171;">Error de conexión o red: ${escapeHTML(error?.message || String(error))}</div>`;
     }
     chatBox.scrollTop = chatBox.scrollHeight;
 }
 
-// BOTÓN DE VOZ EN ES-AR CON TRADUCCIÓN AUTOMÁTICA
 let recognitionInstance = null;
 let isRecognizingVoice = false;
 
@@ -1547,12 +1437,10 @@ function toggleDictadoVoz() {
     const btn = document.getElementById('voice-btn');
     const input = document.getElementById('user-input');
     const targetSelect = document.getElementById('voice-target-lang');
-
     if (!SpeechRecognition) {
         setVoiceStatus('Voz no soportada en este navegador', true);
         return;
     }
-
     if (isRecognizingVoice && recognitionInstance) {
         try { recognitionInstance.stop(); } catch (_) {}
         isRecognizingVoice = false;
@@ -1560,19 +1448,16 @@ function toggleDictadoVoz() {
         setVoiceStatus('Dictado detenido');
         return;
     }
-
     const rec = new SpeechRecognition();
     recognitionInstance = rec;
     rec.lang = 'es-AR';
     rec.interimResults = false;
     rec.maxAlternatives = 1;
-
     rec.onstart = function() {
         isRecognizingVoice = true;
         if (btn) btn.classList.add('listening');
         setVoiceStatus('Escuchando en es-AR...');
     };
-
     rec.onresult = async function(event) {
         const transcript = event?.results?.[0]?.[0]?.transcript?.trim() || '';
         if (!transcript) {
@@ -1588,22 +1473,19 @@ function toggleDictadoVoz() {
         }
         setVoiceStatus(targetLang === 'es' ? 'Listo para enviar (ES)' : `Traducido (${targetLang.toUpperCase()}) y listo`);
     };
-
     rec.onerror = function(event) {
         isRecognizingVoice = false;
         if (btn) btn.classList.remove('listening');
         setVoiceStatus(`Error de voz: ${event?.error || 'unknown'}`, true);
     };
-
     rec.onend = function() {
         isRecognizingVoice = false;
         if (btn) btn.classList.remove('listening');
     };
-
     rec.start();
 }
 
-// PLANTILLAS PROFESIONALES (4 MODELOS + CONTRASEÑA FIJA)
+// PLANTILLAS PROFESIONALES
 let tplEstado = {
     modelo: 'catalogo',
     negocio: '',
@@ -1617,10 +1499,7 @@ let tplEstado = {
 function cargarEstadoPlantillas() {
     const guardado = localStorage.getItem('agora_plantillas_borrador');
     if (guardado) {
-        try {
-            const parsed = JSON.parse(guardado);
-            tplEstado = Object.assign({}, tplEstado, parsed);
-        } catch (_) {}
+        try { tplEstado = Object.assign({}, tplEstado, JSON.parse(guardado)); } catch (_) {}
     }
     seleccionarModeloPlantilla(tplEstado.modelo || 'catalogo', true);
     const nEl = document.getElementById('tpl-business-name');
@@ -1640,10 +1519,7 @@ function seleccionarModeloPlantilla(modelo, silent) {
     tplEstado.modelo = modelo;
     ['catalogo', 'turnero', 'carta', 'landing'].forEach(m => {
         const btn = document.getElementById('tpl-btn-' + m);
-        if (btn) {
-            if (m === modelo) btn.classList.add('active');
-            else btn.classList.remove('active');
-        }
+        if (btn) btn.classList.toggle('active', m === modelo);
     });
     if (!silent) guardarBorradorPlantilla(true);
 }
@@ -1653,13 +1529,8 @@ function cargarFotoPlantilla(event, destino) {
     if (!file) return;
     const reader = new FileReader();
     reader.onload = function(e) {
-        if (destino === 'hero') {
-            const hEl = document.getElementById('tpl-hero-img');
-            if (hEl) hEl.value = e.target.result;
-        } else {
-            const iEl = document.getElementById('tpl-item-img');
-            if (iEl) iEl.value = e.target.result;
-        }
+        const targetEl = document.getElementById(destino === 'hero' ? 'tpl-hero-img' : 'tpl-item-img');
+        if (targetEl) targetEl.value = e.target.result;
     };
     reader.readAsDataURL(file);
 }
@@ -1669,30 +1540,19 @@ function agregarItemPlantilla() {
     const precioEl = document.getElementById('tpl-item-price');
     const descEl = document.getElementById('tpl-item-desc');
     const imgEl = document.getElementById('tpl-item-img');
-
     const titulo = tituloEl ? tituloEl.value.trim() : '';
-    const precio = precioEl ? precioEl.value.trim() : '';
-    const desc = descEl ? descEl.value.trim() : '';
-    const img = imgEl ? imgEl.value.trim() : '';
-
-    if (!titulo) {
-        alert('Ingresá al menos el título del ítem.');
-        return;
-    }
-
+    if (!titulo) return alert('Ingresá al menos el título del ítem.');
     tplEstado.items.push({
         id: 'item_' + Date.now() + '_' + Math.floor(Math.random() * 1000),
         title: titulo,
-        price: precio || '0',
-        desc: desc,
-        img: img
+        price: (precioEl ? precioEl.value.trim() : '') || '0',
+        desc: descEl ? descEl.value.trim() : '',
+        img: imgEl ? imgEl.value.trim() : ''
     });
-
     if (tituloEl) tituloEl.value = '';
     if (precioEl) precioEl.value = '';
     if (descEl) descEl.value = '';
     if (imgEl) imgEl.value = '';
-
     renderListaItemsPlantilla();
     guardarBorradorPlantilla(true);
 }
@@ -1731,14 +1591,12 @@ function sincronizarFormularioPlantilla() {
     const wEl = document.getElementById('tpl-whatsapp');
     const hEl = document.getElementById('tpl-hero-img');
     const pEl = document.getElementById('tpl-owner-pass');
-
     tplEstado.negocio = nEl ? nEl.value.trim() : tplEstado.negocio;
     tplEstado.subtitulo = sEl ? sEl.value.trim() : tplEstado.subtitulo;
     tplEstado.whatsapp = wEl ? wEl.value.trim() : tplEstado.whatsapp;
     tplEstado.heroImg = hEl ? hEl.value.trim() : tplEstado.heroImg;
     const passIngresada = pEl ? pEl.value.trim() : '';
-    if (passIngresada) tplEstado.ownerPass = passIngresada;
-    else if (!tplEstado.ownerPass) tplEstado.ownerPass = '1234';
+    tplEstado.ownerPass = passIngresada || tplEstado.ownerPass || '1234';
 }
 
 function guardarBorradorPlantilla(silent) {
@@ -1997,7 +1855,7 @@ function iniciarListenersFirestoreAgora() {
     escucharDocFirestore('agora_secciones', 'ultimo_link', (data) => {
         if (data.url) {
             localStorage.setItem('agora_ultimo_link', data.url);
-            mostrarPanelLink(data.url);
+            mostrarLinkTiempoReal(data.url);
         }
     });
 }
